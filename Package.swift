@@ -1,26 +1,58 @@
-// swift-tools-version: 6.2
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version: 5.10
+
+// ===----------------------------------------------------------------------===
+// 
+// This source file is part of the DiscogsService open source project
+// 
+// Copyright (c) 2025 Röck+Cöde VoF. and the DiscogsService project authors
+// Licensed under Apache license v2.0
+// 
+// See LICENSE for license information
+// See CONTRIBUTORS for the list of DiscogsService project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+// 
+// ===----------------------------------------------------------------------===
 
 import PackageDescription
 
 let package = Package(
-    name: "discogs-service",
+    name: DiscogsService.package,
+    platforms: [
+        .iOS(.v13),
+        .macOS(.v10_15),
+        .tvOS(.v13),
+        .visionOS(.v1),
+        .watchOS(.v6)
+    ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "discogs-service",
-            targets: ["discogs-service"]
+            name: DiscogsService.package,
+            targets: [DiscogsService.target]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0")
+    ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "discogs-service"
+            name: DiscogsService.target,
+            path: "Sources/\(DiscogsService.target)"
         ),
         .testTarget(
-            name: "discogs-serviceTests",
-            dependencies: ["discogs-service"]
+            name: DiscogsService.test,
+            dependencies: [
+                .byName(name: DiscogsService.target)
+            ],
+            path: "Tests/\(DiscogsService.target)"
         ),
     ]
 )
+
+// MARK: - Constants
+
+enum DiscogsService {
+    static let package = "discogs-service"
+    static let target = "DiscogsService"
+    static let test = "\(DiscogsService.target)Tests"
+}
