@@ -32,12 +32,22 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-openapi-generator.git", from: "1.3.0"),
+        .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.5.0"),
+        .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.0.2"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.1.0")
     ],
     targets: [
         .target(
             name: DiscogsService.target,
-            path: "Sources/\(DiscogsService.target)"
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession")
+            ],
+            path: "Sources/\(DiscogsService.target)",
+            plugins: [
+                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+            ]
         ),
         .testTarget(
             name: DiscogsService.test,

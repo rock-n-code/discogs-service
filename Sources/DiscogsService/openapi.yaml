@@ -1,0 +1,1818 @@
+## ===----------------------------------------------------------------------===
+## 
+## This source file is part of the Discogs Service open source project
+## 
+## Copyright (c) 2025 Röck+Cöde VoF. and the Discogs Service project authors
+## Licensed under Apache license v2.0
+## 
+## See LICENSE for license information
+## See CONTRIBUTORS for the list of Discogs Service project authors
+##
+## SPDX-License-Identifier: Apache-2.0
+## 
+## ===----------------------------------------------------------------------===
+
+openapi: 3.1.1
+info:
+  title: Discogs API
+  version: v2.0
+  summary: The Discogs RESTFul API.
+  description: |
+    # Overview
+
+    The Discogs API v2.0 is a RESTful interface to Discogs data. You can access JSON-formatted information about Database objects such as _Artists_, _Releases_, and _Labels_. Your application can also manage _User Collections_ and _Wantlists_, create _Marketplace_ listings, and more.
+    
+    Some Discogs data is made available under the [CC0 No Rights Reserved](https://creativecommons.org/public-domain/cc0/) license, and some is restricted data, as defined in our [API Terms of Use](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use).
+    
+    Our monthly data dumps are available under the the [CC0 No Rights Reserved](https://creativecommons.org/public-domain/cc0/) license.
+    
+    If you utilize the Discogs API, you are subject to the [API Terms of Use](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use). Please also ensure that any application you develop follows the Discogs [Application Name and Description Policy](https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use)
+
+    # Quickstart 
+
+    If you just want to see some results right now, issue this _curl_ command:
+
+    ```bash
+    curl https://api.discogs.com/releases/249504 --user-agent "FooBarApp/3.0"
+    ```
+
+    # General information
+
+    General Information 
+
+    **Your application must provide a User-Agent string that identifies itself** - preferably something that follows [RFC 1945](https://datatracker.ietf.org/doc/html/rfc1945#section-3.7). Some good examples include:
+    
+    ```
+    AwesomeDiscogsBrowser/0.1 +http://adb.example.com
+    LibraryMetadataEnhancer/0.3 +http://example.com/lime
+    MyDiscogsClient/1.0 +http://mydiscogsclient.org
+    ```
+    
+    Please don’t just copy one of those! Make it unique so we can let you know if your application starts to misbehave - the alternative is that we just silently block it, which will confuse and infuriate your users.
+    
+    Here are some bad examples that are unclear or obscure the nature of the application:
+    
+    ```
+    curl/7.9.8 (i686-pc-linux-gnu) libcurl 7.9.8 (OpenSSL 0.9.6b)
+    Mozilla/5.0 (X11; Linux i686; rv:6.0.2) Gecko/20100101 Firefox/6.0.2
+    my app
+    ```
+
+    # Authentication
+
+    Most endpoints require authentication. The API supports multiple methods:
+    1.  **Discogs Auth (Key & Secret):** For read-only access to public data with a higher rate limit.
+    2.  **Discogs Auth (Personal Access Token):** For full access to your own user account data.
+    3.  **OAuth 1.0a:** For building third-party applications that act on behalf of other Discogs users.
+
+    # Rate Limiting 
+
+    **Requests are throttled by the server by source IP to 60 per minute for authenticated requests, and 25 per minute for unauthenticated requests, with some exceptions.**
+
+    Your application should identify itself to our servers via a unique user agent string in order to achieve the maximum number of requests per minute.
+
+    Our rate limiting tracks your requests using a moving average over a 60 second window. If no requests are made in 60 seconds, your window will reset.
+
+    We attach the following headers to responses to help you track your rate limit use:
+
+    * `X-Discogs-Ratelimit`: The total number of requests that can make in a one minute window.
+    * `X-Discogs-Ratelimit-Used` : The number of requests made in an existing rate limit window.
+    * `X-Discogs-Ratelimit-Remaining`: The number of remaining requests to make in an existing rate limit window.
+
+    Your application should take our global limit into account and throttle its requests locally.
+
+    In the future, we may update these rate limits at any time in order to provide service for all users.
+
+    # Pagination 
+    
+    Some resources represent collections of objects and may be paginated. By default, 50 items per page are shown.
+    
+    To browse different pages, or change the number of items per page (up to 100), use the page and per_page query string parameters:
+
+    ```
+    GET https://api.discogs.com/artists/1/releases?page=2&per_page=75
+    ```
+
+    Responses include a `Link` header:
+
+    ```
+    Link: <https://api.discogs.com/artists/1/releases?page=3&per_page=75>; rel=next,
+    <https://api.discogs.com/artists/1/releases?page=1&per_page=75>; rel=first,
+    <https://api.discogs.com/artists/1/releases?page=30&per_page=75>; rel=last,
+    <https://api.discogs.com/artists/1/releases?page=1&per_page=75>; rel=prev
+    ```
+
+    And a pagination object in the response body:
+
+    ```json
+    {
+      "pagination": { 
+        "page": 2, 
+        "pages": 30, 
+        "items": 2255, 
+        "per_page": 75, 
+        "urls":
+          { 
+            "first": "https://api.discogs.com/artists/1/releases?page=1&per_page=75",
+            "prev": "https://api.discogs.com/artists/1/releases?page=1&per_page=75", 
+            "next": "https://api.discogs.com/artists/1/releases?page=3&per_page=75", 
+            last": "https://api.discogs.com/artists/1/releases?page=30&per_page=75"
+          } 
+      }, 
+      "releases":
+        [ ... ] 
+      }
+    }
+    ```
+
+    # Versioning and Media Types 
+
+    Currently, the API only supports one version: `v2`. However, you can specify a version in your requests to future-proof your application. By adding an `Accept` header with the version and media type, you can guarantee your requests will receive data from the correct version you develop your app on.
+
+    A standard `Accept` header may look like this:
+
+    ```
+    application/vnd.discogs.v2.html+json
+    ```
+
+    If case of requesting information from an endpoint that may have text formatting in it, it is possible to choose which kind of formatting to be returned by changing that section of the `Accept` header. We currently support 3 types:
+
+    * `application/vnd.discogs.v2.html+json`
+    * `application/vnd.discogs.v2.plaintext+json`
+    * `application/vnd.discogs.v2.discogs+json`
+
+    If no `Accept` header is supplied, or if the Accept header differs from one of the three previous options, we default to `application/vnd.discogs.v2.discogs+json`.
+
+    # Videos 
+
+    In case an application integrates **YouTube** videos, then third party cookies may be used. Please refer to the [YouTube and Google's cookie policy](https://policies.google.com/technologies/cookies).
+
+    # FAQ 
+
+    **1) Why am I getting an empty response from the server?**
+
+    This generally happens when no `User-Agent` header is added to the requests.
+
+    **2) How do I get updates about the API?**
+
+    Subscribe to the [API Announcements forum thread](https://www.discogs.com/forum/thread/521520689469733cfcfd2089). For larger, breaking changes, an email notice to all developers with a registered Discogs application will be sent.
+
+    **3) Where can I register a Discogs application?**
+
+    A Discogs application can be registered on the [Developer Settings](https://www.discogs.com/settings/developers).
+
+    **4) If I have a question/issue with the API, should I file a Support Request?**
+
+    It's generally best to start out with a forum post on the [API topic](https://www.discogs.com/forum/topic/1082) since other developers may have had similar issues and they can point in the right direction. If the issue requires privacy, then a support request is the best way to go.
+
+    **5) I'm getting a 404 response when trying to fetch images; what gives?**
+
+    This may seem obvious, but make sure the URL has not been changed. The URLs returned are signed URLs, so trying to change one part of the URL (e.g., _Release ID_ number) will generally not work.
+
+    **6) What are the authentication requirements for requesting images?**
+
+    Please see the [Images documentation page](https://www.discogs.com/developers/#page:images).
+
+    **7) Why am I getting a particular HTTP response?**
+
+    **200 OK**
+
+    The request was successful, and the requested data is provided in the response body.
+
+    **201 Continue**
+
+    POST request is sent to a list of resources to    create a new one. The ID of the newly-created resource will be provided in the body of the response.
+
+    **204 No Content**
+
+    The request was successful, and the server has no     additional information to convey, so the response body is empty.
+
+    **401 Unauthorized**
+
+    A resource that first requires [authentication](https://www.discogs.com/developers/#page:authentication) is being accessed. See Authenticating with OAuth.
+
+    **403 Forbidden**
+
+    The access to a resource is not allowed, even if authenticated. Trying to modify another user's profile, for example, will produce this error.
+
+    **404 Not Found**
+
+    The requested resource does not exist.
+
+    **405 Method Not Allowed**
+
+    A HTTP verb is not supported by the resource. Trying to `PUT` to `/artists/1`, for example, will fail because `Artists` are read-only.
+
+    **422 Unprocessable Entity**
+
+    Even though the request is well-formed, there is something semantically wrong with the body of the request. This can be due to malformed JSON, a missing parameter or the wrong type, or trying to perform an action that doesn not make any sense. Check the response body for specific information about what went wrong.
+
+    **500 Internal Server Error**
+
+    Something went wrong on the service while attempting to process the request. The message field of the response body will contain an error code that can be sent to Discogs Support (which will help on tracking down your specific issue).
+
+  termsOfService: https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use
+  contact:
+    name: Discogs API Support
+    url: https://www.discogs.com/forum/topic/1082
+    email: api@discogs.com
+  license:
+    name: API Terms of Use
+    url: https://support.discogs.com/hc/en-us/articles/360009334593-API-Terms-of-Use
+externalDocs:
+  description: Discogs Developers Portal
+  url: https://www.discogs.com/developers
+servers:
+  - url: https://api.discogs.com/
+    description: Live Server
+tags:
+  - name: Service
+    description: Access data related to the service.
+  - name: Database
+    description: Access data on artists, labels, and releases.    
+  - name: Marketplace
+    description: Interact with the marketplace, including listings, orders, and fees.
+  - name: User Identity
+    description: Manage and retrieve user profile information, submissions, and contributions.
+  - name: User Collection
+    description: Manage a user's record collection.
+  - name: User Wantlist
+    description: Manage a user's wantlist.
+  - name: User Lists
+    description: Manage user-created lists.
+  - name: Inventory Management
+    description: Bulk inventory management via CSV uploads and exports.
+paths:
+  /:
+    get:
+      summary: Get information about the service.
+      description:  Retrieves any available information related to the service.
+      operationId: getService
+      tags:
+        - Service
+      responses: 
+        '200':
+          description: Service information returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        '500':
+          $ref: '#/components/responses/Unavailable'
+  /artists/{artist_id}:
+    get:
+      summary: Get information about an artist.
+      operationId: getArtist
+      description: Retrieves any available information for a specific artist.
+      tags:
+        - Database
+      parameters:
+        - $ref: '#/components/parameters/ArtistId'
+      responses:
+        '200':
+          description: Successfully retrieved artist details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artist'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /artists/{artist_id}/releases:
+    get:
+      tags:
+        - Database
+      summary: Get information about releases of an artist.
+      description: |
+        Returns a list of releases and masters associated with an artist. 
+        
+        This endpoint supports pagination.
+      operationId: getArtistReleases
+      parameters:
+        - $ref: '#/components/parameters/ArtistId'
+        - $ref: '#/components/parameters/ArtistReleasesSort'
+        - $ref: '#/components/parameters/SortOrder'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: A paginated list of releases of an artist.
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  releases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ArtistRelease'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /labels/{label_id}:
+    get:
+      tags:
+        - Database
+      summary: Get information about a label
+      description: Retrieves any available information for a specific label.
+      operationId: getLabel
+      parameters:
+        - $ref: '#/components/parameters/LabelId'
+      responses:
+        '200':
+          description: Successfully retrieved label details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /labels/{label_id}/releases:  
+    get:  
+      tags:  
+        - Database  
+      summary: Get information about the releases of a label.  
+      description: |
+        Returns a list of releases associated with a label. 
+        
+        This endpoint Supports pagination.  
+      operationId: getLabelReleases  
+      parameters:  
+        - $ref: '#/components/parameters/LabelId'  
+        - $ref: '#/components/parameters/Page'  
+        - $ref: '#/components/parameters/PerPage'  
+      responses:  
+        '200':  
+          description: A paginated list of the label's releases.  
+          headers:  
+            Link:  
+              $ref: '#/components/headers/Link'  
+          content:  
+            application/json:  
+              schema:  
+                type: object  
+                properties:  
+                  pagination:  
+                    $ref: '#/components/schemas/Pagination'  
+                  releases:  
+                    type: array  
+                    items:  
+                      $ref: '#/components/schemas/LabelRelease'
+        '404':  
+          $ref: '#/components/responses/NotFound'  
+  /masters/{master_id}:
+    get:
+      tags:
+        - Database
+      summary: Get information about a master release.
+      description: |
+        Retrieves any available information for a specific master release.
+
+        A master release represents a set of similar releases.
+      operationId: getMaster
+      parameters:
+        - $ref: '#/components/parameters/MasterId'
+      responses:
+        '200':
+          description: Successfully retrieved master release details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Master'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /masters/{master_id}/versions:
+    get:
+      tags:
+        - Database
+      summary: Get information about the versions of a master release.
+      description: |
+        Retrieves a list of all releases that are versions of the specified master release. 
+        
+        This request supports pagination.
+      operationId: getMasterVersions
+      parameters:
+        - $ref: '#/components/parameters/MasterId'
+        - $ref: '#/components/parameters/Format'
+        - $ref: '#/components/parameters/Label'
+        - $ref: '#/components/parameters/Released'
+        - $ref: '#/components/parameters/Country'
+        - $ref: '#/components/parameters/MasterVersionsSort'
+        - $ref: '#/components/parameters/SortOrder'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: A paginated list of releases belonging to the master.
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  versions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReleaseVersion'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /releases/{release_id}:
+    get:
+      tags:
+        - Database
+      summary: Get information about a release
+      description: Retrieves details for a specific release.
+      operationId: getRelease
+      parameters:
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/Currency'
+      responses:
+        '200':
+          description: Successfully retrieved release details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Release'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /releases/{release_id}/rating:
+    get:
+      tags:
+        - Database
+      summary: Get information about a rating of release.
+      description: Retrieves the average rating and the total number of user ratings for a given release.
+      operationId: getReleaseRating
+      parameters:
+        - $ref: '#/components/parameters/ReleaseId'
+      responses:
+        '200':
+          description: Successfully retrieved release rating details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseRating'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /releases/{release_id}/rating/{username}:
+    get:
+      tags:
+        - Database
+      summary: Get information about a rating of release by a user.
+      description: Retrieves the rating for a given release by a specific user.
+      operationId: getReleaseRatingByUser
+      parameters:
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '200':
+          description: Successfully retrieved release rating details by a given user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseRatingByUser'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /releases/{release_id}/stats:
+    get:
+      tags:
+        - Database
+      summary: Get information about statistics of release.
+      description: Retrieves the total number of “haves” (in the community's collections) and “wants” (in the community's wantlists) for a given release.
+      operationId: getReleaseStats
+      parameters:
+        - $ref: '#/components/parameters/ReleaseId'
+      responses:
+        '200':
+          description: |
+            Successfully retrieved release rating details by a given user.
+
+            > warning: There is a discrepancy about this response between was is documented and what the endpoints actually responds. In the [documentation](https://www.discogs.com/developers#page:database,header:database-release-stats), it is defined that a type containing a statistical data would be returned but the actual response returns an object that contains a boolean flag instead.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ReleaseStats'
+                  - type: object
+                    properties:
+                      is_offensive:
+                        type: boolean
+                    required:
+                      - is_offensive
+        '404':
+          $ref: '#/components/responses/NotFound'    
+  /database/search:
+    get:
+      tags:
+        - Database
+      summary: Search any information from the database.
+      description: |
+        Issue a search query to the Discogs database. 
+        
+        This endpoint supports pagination and also, it requires authentication.
+      operationId: searchDatabase
+      parameters:
+        - name: query
+          description: A query to search for.
+          in: query
+          schema:
+            type: string
+        - name: type
+          description: A type of resource to search for.
+          in: query
+          schema:
+            type: string
+            enum: 
+              - release
+              - master
+              - artist
+              - label
+        - name: title
+          description: |
+            A title to search for.
+
+            This parameter can be combined with the `name` query parameter.
+          in: query
+          schema:
+            type: string
+        - name: release_title
+          description: A release title to search for.
+          in: query
+          schema:
+            type: string
+        - name: credit
+          in: query
+          description: Some credits to search for.
+          schema:
+            type: string
+        - name: artist
+          description: An artist name to search for.
+          in: query
+          schema:
+            type: string
+        - name: anv
+          description: A ANV (Artist Name Variation) to search for.
+          in: query
+          schema:
+            type: string
+        - name: label
+          description: A label name to search for.
+          in: query
+          schema:
+            type: string
+        - name: genre
+          description: A music genre to search for.
+          in: query
+          schema:
+            type: string
+        - name: style
+          description: A musical style to search for.
+          in: query
+          schema:
+            type: string
+        - name: country
+          description: A country to search for.
+          in: query
+          schema:
+            type: string
+        - name: year
+          description: A release year to search for.
+          in: query
+          schema:
+            type: string
+        - name: format
+          description: A release format to search for.
+          in: query
+          schema:
+            type: string
+        - name: catno
+          description: A catalogg number to search for.
+          in: query
+          schema:
+            type: string
+        - name: barcode
+          description: A barcode number to search for.
+          in: query
+          schema:
+            type: string
+        - name: track
+          description: A track title to search for.
+          in: query
+          schema:
+            type: string
+        - name: submitter
+          description: A username of a submitter to search for.
+          in: query
+          schema:
+            type: string
+        - name: contributor
+          description: A username of a contributor to search for.
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      security:
+        - Token: []
+        - KeySecret: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved search results.
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  results:
+                    description: A list of artist, label, master and/or release search results.
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/ReleaseResult'
+                        - $ref: '#/components/schemas/MasterResult'
+                        - $ref: '#/components/schemas/ArtistResult'
+                        - $ref: '#/components/schemas/LabelResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  headers:
+    Link:
+      description: |
+        Contains URLs for pagination, compliant with RFC 5988. 
+        
+        It provides `first`, `prev`, `next`, and `last` links where applicable.
+      schema:
+        type: string
+        example: <https://api.discogs.com/artists/1/releases?page=2&per_page=75>; rel="next", <https://api.discogs.com/artists/1/releases?page=30&per_page=75>; rel="last"
+  parameters:
+    ArtistId:
+      name: artist_id
+      description: An identifier of an artist.
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 108713
+    ArtistReleasesSort:
+      description: A value to sort the releases of an artist by.
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - year
+          - title
+          - format
+    Country:
+      description: A filter by country.
+      name: country
+      in: query
+      schema:
+        type: string    
+    Currency:
+      description: |
+        A currency code in the marketplace. 
+
+        Defaults to the authenticated users currency.
+      name: curr_abbr
+      in: query
+      schema:
+        $ref: '#/components/schemas/Currency'
+    Format:
+      description: A filter by format.
+      name: format
+      in: query
+      schema:
+        type: string
+    Label:
+      description: A filter by label.
+      name: label
+      in: query
+      schema:
+        type: string    
+    LabelId:
+      description: An identifier of a label.
+      name: label_id
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 1
+    MasterId:
+      description: An identifier of a master.
+      name: master_id
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 1000    
+    MasterVersionsSort:
+      description: A value to sort the master versions by.
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum: 
+          - released
+          - title
+          - format
+          - label
+          - catno
+          - country
+    Page:
+      description: A number of page of results to return.
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+    PerPage:
+      description: A number of items to return per page.
+      name: per_page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    Released:
+      description: A filter by release year.
+      name: released
+      in: query
+      schema:
+        type: string    
+    ReleaseId:
+      description: An identifier of a release.
+      name: release_id
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 249504
+    SortOrder:
+      description: The order to sort the results. 
+      name: sort_order
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: 
+          - asc
+          - desc
+    Username:
+      description: A username of a user.
+      name: username
+      in: path
+      required: true
+      schema:
+        type: string
+      example: memory
+  responses:
+    InternalError:
+      description: An Internal Server error was encountered.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServiceError'
+          examples:
+            Timeout:
+              value:
+                message: Query time exceeded. Please try a simpler query.
+            Malformed:
+              value:
+                message: An internal server error occurred. (Malformed query?)
+    NotFound:
+      description: A requested resource cannot be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServiceError'
+          example:
+            message: Resource not found.
+    Unauthorized:
+      description: A requested resource cannot be accessed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServiceError'
+          example:
+            message: You must authenticate to access this resource.
+    Unavailable:
+      description: The service is currently unavailable to handle requests.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServiceError'
+          example:
+            message: Server is currently unavailable.
+  schemas:
+    Artist:
+      description: A type that represents an artist or a group.
+      type: object
+      properties:
+        id:
+          description: An identifier of an artist.
+          type: integer
+          readOnly: true
+        name:
+          description: A name of an artist.
+          type: string
+        realname:
+          description: A real name of an artist, if any.
+          type: string
+        resource_url:
+          description: A URI resource of an artist.
+          type: string
+          format: uri
+          readOnly: true
+        uri:
+          description: A URI representation of an artist.
+          type: string
+          format: uri
+          readOnly: true
+        releases_url:
+          description: A URL to the releases of an artist.
+          type: string
+          format: uri
+        profile:
+          description: A detailed profile of an artist, if any.
+          type: string
+        urls:
+          description: A list of URLs related to an artist, if any.
+          type: array
+          items:
+            type: string
+            format: uri
+        namevariations:
+          description: A list of name variations related to an artist, if any.
+          type: array
+          items:
+            type: string
+        members:
+          description: A list of artists related to an artist (in case of group), if any.
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtistId'
+        images:
+          description: A list of images related to an artist, if any.
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        data_quality:
+          description: An explanation for the data quality related to an artist.
+          type: string
+      required: 
+        - data_quality
+        - id
+        - name
+        - releases_url
+        - resource_url
+        - uri
+    ArtistId:
+      description: A type that references an artist.
+      type: object
+      properties:
+        id:
+          description: An identifier of an artist.
+          type: integer
+          readOnly: true
+        name:
+          description: A name of an artist.
+          type: string
+        resource_url:
+          description: A URI resource of an artist.
+          type: string
+          format: uri
+          readOnly: true
+        active:
+          description: A flag that indicates whether the relation is currently active or not.
+          type: boolean
+        anv:
+          description: TBD
+          type: string
+        join:
+          description: TBD
+          type: string
+        role:
+          description: A role of an artist.
+          type: string
+        tracks:
+          description: TBD
+          type: string
+      required:
+        - id
+        - name
+        - resource_url
+    ArtistRelease:
+      description: A type that represents a release of an artist.
+      type: object
+      properties:
+        id:
+          description: An identifier of a release.
+          type: integer
+          readOnly: true
+        resource_url:
+          description: A URI resource of a release.
+          type: string
+          format: uri
+          readOnly: true
+        type:
+          description: A type of a release.
+          type: string
+          enum:
+            - release
+            - master
+        title:
+          description: A title of a release.
+          type: string
+        thumb:
+          description: A URL link to a thumbnail of a release.
+          type: string
+          format: uri
+        artist:
+          description: A name for the artist of a release.
+          type: string
+        role:
+          description: A role of a release.
+          type: string
+        year:
+          description: A number of year of a release.
+          type: integer
+        format:
+          description: A format of a release.
+          type: string
+        label:
+          description: A label of a release.
+          type: string
+        status:
+          description: A status of a release.
+          type: string
+      required:
+        - artist
+        - id
+        - resource_url
+        - role
+        - title
+        - thumb
+        - type
+    ArtistResult:
+      description: A type that represents an artist search result.
+      allOf:
+        - $ref: '#/components/schemas/SearchResult'
+        - type: object
+          properties:
+            type:
+              enum: [artist]
+    Community:
+      description: A type that represents a community of users, in relationship to a release.
+      type: object
+      properties:
+        have:
+          description: A number of users that have a release.
+          type: integer
+        want:
+          description: A number of users that want a release.
+          type: integer
+        rating:
+          $ref: '#/components/schemas/Rating'
+        submitter:        
+          description: A reference of a user that submitted the release into the database.
+          $ref: '#/components/schemas/UserId'
+        contributors:
+          description: A list of references of users that contributed data of a release into the database.
+          type: array
+          items:
+            $ref: '#/components/schemas/UserId'
+        data_quality:
+          description: An explanation for the data quality related to a community.
+          type: string
+        status:
+          description: An explanation for the stat status of a community.
+          type: string
+      required:
+        - have
+        - want
+    Currency:
+      description: A list of currency codes defined in the marketplace.
+      type: string
+      enum: 
+        - USD
+        - GBP
+        - EUR
+        - CAD
+        - AUD
+        - JPY
+        - CHF
+        - MXN
+        - BRL
+        - NZD
+        - SEK
+        - ZAR
+    Identifier:
+      description: A type that represents an identifier.
+      type: object
+      properties:
+        type:
+          description: A type of an identifier.
+          type: string
+        value:
+          description: A value of an identifier, if any.
+          type: string
+        description:
+          description: A description of an identifier, if any.
+          type: string
+      required:
+        - type  
+    Image:
+      description: A type that represents an image of a resource.
+      type: object
+      properties:
+        type:
+          description: A type of an image.
+          type: string
+          enum: 
+            - primary
+            - secondary
+        uri:
+          description: A URI representation of an image.
+          type: string
+          format: uri
+          readOnly: true
+        resource_url:
+          description: A URI resource of an image.
+          type: string
+          format: uri
+          readOnly: true
+        uri150:
+          description: TBD
+          type: string
+          format: uri
+        width:
+          description: A width of an image (in pixels).
+          type: integer
+        height:
+          description: A height of an image (in pixels).
+          type: integer
+      required:
+        - height
+        - resource_url
+        - type
+        - uri
+        - uri150
+        - width
+    Label:
+      description: A type that represents a label, company, recording studio, etc.
+      type: object
+      properties:
+        id:
+          description: An identifier of a label.
+          type: integer
+          readOnly: true
+        name:
+          description: A name of a label.
+          type: string
+        resource_url:
+          description: A URI resource of a label.
+          type: string
+          format: uri
+          readOnly: true
+        uri:
+          description: A URI representation of a label.
+          type: string
+          format: uri
+          readOnly: true
+        releases_url:
+          description: A URL to the releases of a label.
+          type: string
+          format: uri
+          readOnly: true
+        profile:
+          description: A detailed profile of a label, if any.
+          type: string
+        contact_info:
+          description: A contact information of a label, if any.
+          type: string
+        parent_label:
+          description: A reference to a parent label of a label, if any.
+          $ref: '#/components/schemas/LabelId'
+        sublabels:
+          description: A list of sub-labels references of a label.
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelId'
+        urls:
+          description: A list of URLs related to a label, if any.
+          type: array
+          items:
+            type: string
+            format: uri
+        images:
+          description: A list of images related to a label, if any.
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        data_quality:
+          description: An explanation for the data quality related to a label.
+          type: string
+      required:
+        - data_quality
+        - id
+        - name
+        - releases_url
+        - resource_url
+        - uri
+    LabelId:
+      description: A type that references a label.
+      type: object
+      properties:
+        id:
+          description: An identifier of a label.
+          type: integer
+          readOnly: true
+        name:
+          description: A name of a label.
+          type: string
+        resource_url:
+          description: A URI resource of a label.
+          type: string
+          format: uri
+        catno:
+          description: A category number of a label, if any.
+          type: string
+        entity_type:
+          description: An entity name of a label, if any.
+          type: string
+      required:
+        - id
+        - name
+        - resource_url
+    LabelRelease:
+      description: A type that represents a release of a label.
+      type: object
+      properties:
+        id:
+          description: An identifier of a release.
+          type: integer
+          readOnly: true
+        resource_url:
+          description: A URI resource of a release.
+          type: string
+          format: uri
+        thumb:
+          description: A URL link to a thumbnail of a release.
+          type: string
+          format: uri
+        artist:
+          description: A name for the artist of a release.
+          type: string
+        title:
+          description: A title of a release.
+          type: string
+        format:
+          description: A format of a release.
+          type: string
+        catno:
+          description: A category number of a release.
+          type: string
+        status:
+          description: A status of a release.
+          type: string
+        year:
+          description: A number of year of a release.
+          type: integer   
+      required:
+        - artist
+        - catno
+        - format
+        - id
+        - resource_url
+        - status
+        - title
+        - thumb
+        - year 
+    LabelResult:
+      description: A type that represents a label search result.
+      allOf:
+        - $ref: '#/components/schemas/SearchResult'
+        - type: object
+          properties:
+            type:
+              enum: [label]
+    Master:
+      description: A type that represents a set of similar releases.
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Release'
+        - type: object
+          properties:
+            main_release:
+              description: An identifier of the main release for this master.
+              type: integer
+            main_release_url:
+              description: A URL link of the main release for this master.
+              type: string
+              format: uri
+            versions_url:
+              description: A URL link to the versions of this master.
+              type: string
+              format: uri
+    MasterResult:
+      description: A type that represents a master search result.
+      allOf:
+        - $ref: '#/components/schemas/SearchResult'
+        - type: object
+          properties:
+            type:
+              enum: [master]
+            main_release:
+              description: An identifier of a main release for a master.
+              type: integer
+    Pagination:
+      description: A type that provides details about a paginated result.
+      type: object
+      properties:
+        page:
+          description: A number for the current page in a result.
+          type: integer
+        pages:
+          description: A total number of pages in a result.
+          type: integer
+        per_page:
+          description: A total number of items per page in a result.
+          type: integer
+        items:
+          description: A total number of items in a result.
+          type: integer
+        urls:
+          description: A collection of URLs to navigate through the pages in a result.
+          type: object
+          properties:
+            first:
+              description: A URL link to the first page in a result, if any.
+              type: string
+              format: uri
+            prev:
+              description: A URL link to a previous page in a result, if any.
+              type: string
+              format: uri
+            next:
+              description: A URL link to a next page in a result, if any.
+              type: string
+              format: uri
+            last:
+              description: A URL link to the last page in a result, if any.
+              type: string
+              format: uri
+      required:
+        - page
+        - pages
+        - per_page
+        - items
+        - urls
+    Rating: 
+      description: A type that represents a community rating of a release.
+      type: object
+      properties:
+        count:
+          description: A number of ratings given by users of a release.
+          type: integer
+        average:
+          description: An average of the ratings given by users of a release.
+          type: number
+          format: float
+      required:
+        - average
+        - count    
+    Release:
+      description: A type that eepresents a particular physical or digital object released by one or more artists.
+      type: object
+      properties:
+        id:
+          description: An identifier of a release.
+          type: integer
+          readOnly: true
+        title:
+          description: A title of a release.
+          type: string
+        resource_url:
+          description: A URI resource of a release.
+          type: string
+          format: uri
+          readOnly: true
+        uri:
+          description: A URI representation of a release.
+          type: string
+          format: uri
+          readOnly: true
+        status:
+          description: A status of a release.
+          type: string
+        data_quality:
+          description: An explanation for the data quality related to a release.
+          type: string
+        thumb:
+          description: A URL link to a thumbnail of a release.
+          type: string
+          format: uri
+        country:
+          description: A country of a release, if any.
+          type: string
+        year:
+          description: A number of year of a release, if any.
+          type: integer
+        notes:
+          description: Notes of a release, if any.
+          type: string
+        released:
+          description: A release date of a release in a free-text format.
+          type: string
+        released_formatted:
+          description: A released date of a release in formatted text.
+          type: string
+        date_added:
+          description: A date and time of a release being added to the database.
+          type: string
+          format: date-time
+        date_changed:
+          description: A date and time of a release being updated in the database.
+          type: string
+          format: date-time
+        lowest_price:
+          description: A decimal number for the lowest price of a release in the marketplace, if any.
+          type: number
+          format: float
+        num_for_sale:
+          description: A number of items of a release for sale in the marketplace, if any.
+          type: integer
+        estimated_weight: 
+          description: An estimated weight of a release, if any.
+          type: integer
+        format_quantity:
+          description: A total number of formats of a release.
+          type: integer
+        master_id:
+          description: An identifier of a master associated with a release, if any.
+          type: integer
+        master_url: 
+          description: A URL link to a master associated with a release, if any.
+          type: string
+          format: uri
+        artists:
+          description: A list of artists associated with a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtistId'
+        labels:
+          description: A list of labels associated with a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelId'
+        extraartists:
+          description: A list of extra artists associated with a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtistId'
+        formats:
+          description: A list of formats of a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/ReleaseFormat'
+        genres:
+          description: A list of music genres of a release.
+          type: array
+          items:
+            type: string
+        styles:
+          description: A list of musical styles of a release.
+          type: array
+          items:
+            type: string
+        community:
+          description: Some community information of a release.
+          $ref: '#/components/schemas/Community'
+        companies:
+          description: A list of companies related to a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelId'
+        tracklist:
+          description: A list of tracks of a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/Track'
+        videos:
+          description: A list of videos associated with a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/Video'
+        identifiers:
+          description: A list of identifiers associated with a release.
+          type: array
+          items:
+            $ref: '#/components/schemas/Identifier'
+      required:
+        - artists
+        - data_quality
+        - genres        
+        - id
+        - resource_url
+        - status
+        - styles
+        - title
+        - tracklist
+        - uri
+        - videos
+    ReleaseFormat:
+      description: A type that represents a format of a release.
+      type: object
+      properties:
+        name:
+          description: A name of a format.
+          type: string
+        qty:
+          description: A quantity of a format.
+          type: string # Note: API returns this as a string
+        text:
+          description: An explanation of a format, if any.
+          type: string
+        descriptions:
+          description: A list of descriptions of a format.
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - qty
+        - descriptions
+    ReleaseRating:
+      description: A type that represents a community rating of a release.
+      type: object
+      properties:
+        rating:
+          $ref: '#/components/schemas/Rating'
+        release_id:
+          description: An identifier of a release.
+          type: integer
+          readOnly: true
+      required:
+        - rating
+        - release_id
+    ReleaseRatingByUser:
+      description: A type that represents a rating of a release by a user.
+      type: object
+      properties:
+        username:
+          description: A username of a user.
+          type: string
+          readOnly: true
+        release_id:
+          description: An identifier of a release.
+          type: integer
+          readOnly: true
+        rating:
+          description: A number that defines a rating value of a release.
+          type: integer
+          minimum: 0
+          maximum: 5
+      required:
+        - rating
+        - release_id
+        - username
+    ReleaseResult:
+      description: A type that represents a release search result.
+      allOf:
+        - $ref: '#/components/schemas/SearchResult'
+        - type: object
+          properties:
+            type:
+              enum: [release]
+    ReleaseStats:
+      description: A type that represents the statistics of a release.
+      type: object
+      properties:
+        num_have:
+          description: A total number of users that have a release in their collection.
+          type: integer
+          minimum: 0
+        num_want:
+          description: A total number of users that have a release in their wantlist.
+          type: integer
+          minimum: 0
+      required:
+        - num_have
+        - num_want
+    ReleaseVersion:
+      description: A type that represents a version of a release.
+      type: object
+      properties:
+        id:
+          description: An identifier of a release version.
+          type: integer
+          readOnly: true
+        resource_url:
+          description: A URI resource of a release version.
+          type: string
+          format: uri
+          readOnly: true
+        status:
+          description:  A status of a release version.
+          type: string
+        thumb:
+          description: A URL link to a thumbnail of a release version.
+          type: string
+          format: uri
+        format:
+          description: A format of a release version.
+          type: string
+        country:
+          description: A country of a release version, if any.
+          type: string
+        title:
+          description: A title of a release version.
+          type: string
+        label:
+          description: A label of a release version.
+          type: string
+        released:
+          description: A release year of a release version.
+          type: string
+        major_formats:
+          description: A list of formats of a release version.
+          type: array
+          items:
+            type: string
+        catno:
+          description: A category number of a release version, if any.
+          type: string
+        stats:
+          description: A type contains statictics about a release version.
+          type: object
+          properties:
+            community:
+              description: A type that represents the relationship between users and a release version.
+              type: object
+              properties:
+                in_collection:
+                  description: A total number of users that have a release version in their collections.
+                  type: integer
+                in_wantlist:
+                  description: A total number of users that have a release version in their wantlist.
+                  type: integer
+              required:
+                - in_collection
+                - in_wantlist
+      required:
+        - format
+        - id
+        - label
+        - major_formats
+        - released
+        - resource_url
+        - stats
+        - status
+        - thumb
+        - title
+    SearchResult:
+      description: A type that represents a search result.
+      type: object
+      properties:
+        id:
+          description: An identifier of a result.
+          type: integer
+          readOnly: true
+        type:
+          description: A type of a result.
+          type: string
+          enum: ['']
+        title:
+          description: A title of a result
+          type: string
+        thumb:
+          description: A URL link to a thumbnail of a result.
+          type: string
+          format: uri
+        cover_image:
+          description: A URL link to a cover image of a result.
+          type: string
+          format: uri
+        resource_url:
+          description: A URI resource of a result.
+          type: string
+          format: uri
+          readOnly: true
+        uri:
+          description: A URI representation of a release.
+          type: string
+          readOnly: true
+        country:
+          description: A country of a result.
+          type: string
+        year:
+          description: A number of year of a result.
+          type: string
+        community:
+          $ref: '#/components/schemas/Community'
+        format:
+          description: A list of formats associated with a result.
+          type: array
+          items:
+            type: string
+        label:
+          description: A list of labels associated with a result.
+          type: array
+          items:
+            type: string
+        catno:
+          description: A category number of a result.
+          type: string
+        genre:
+          description: A list of music genres associated with a result.
+          type: array
+          items:
+            type: string
+        style:
+          description: A list of music styles associated with a result.
+          type: array
+          items:
+            type: string
+        barcode:
+          description: A list of barcode numbers associated with a result.
+          type: array
+          items:
+            type: string
+      required:
+        - barcode
+        - catno
+        - community
+        - country
+        - cover_image
+        - format
+        - genre
+        - id
+        - label
+        - resource_url
+        - style
+        - thumb
+        - title
+        - type
+        - uri
+        - year
+    Service:
+      description: A type that encapsulates any available information about the service.
+      type: object
+      properties:
+        api_version:
+          description: A current API version of the service.
+          type: string
+        documentation_url:
+          description: A URI link to the Developers' documentation available online.
+          type: string
+          format: uri
+        hello:
+          description: A welcome message send by the service.
+          type: string
+        statistics:
+          description: A type that encapsulates statistical data about the service.
+          type: object
+          properties:
+            artists:
+              description: A total number of artists registered in the service.
+              type: integer
+            labels:
+              description: A total number of labels registered in the service.
+              type: integer
+            releases:
+              description: A total number of releases registered in the service.
+              type: integer
+          required:
+            - artists
+            - labels
+            - releases
+      required:
+        - api_version
+        - documentation_url
+        - hello
+        - statistics
+    ServiceError:
+      description: A type that contains any error data.
+      type: object
+      properties:
+        message:
+          description: A message of a service error.
+          type: string
+      required: 
+        - message
+    Track:
+      description: A type that represents a track.
+      type: object
+      properties:
+        position:
+          description: A position number of a track.
+          type: string
+        type_:
+          description: A type of a track.
+          type: string
+        title:
+          description: A title of a track.
+          type: string
+        duration:
+          description: A duration of a track in number of seconds.
+          type: string
+        extraartists:
+          description: A list of extra artists related to a track.
+          type: array
+          items:
+            $ref: '#/components/schemas/ArtistId'
+    UserId:
+      description: A type that references a user.
+      type: object
+      properties:
+        id:
+          description: An identifier of a user.
+          type: integer
+        username:
+          description: A username of a user.
+          type: string
+        resource_url:
+          description: A URI resource of a user.
+          type: string
+          format: uri
+      required:
+        - id
+        - resource_url
+        - username
+    Video:
+      description: A type that represents a video.
+      type: object
+      properties:
+        uri:
+          description: A URI representation of a video.
+          type: string
+          format: uri
+          readOnly: true
+        duration:
+          description: A duration of a video in number of seconds.
+          type: integer
+        title:
+          description: A title of a video.
+          type: string
+        description:
+          description: A description of a video.
+          type: string
+        embed:
+          description: A flag that indicates whether a video is embedded or not.
+          type: boolean
+      required: 
+        - description
+        - duration
+        - embed
+        - title
+        - uri
+  securitySchemes:
+    KeySecret:
+      description: |
+        Discogs authentication using a key/secret pair. 
+        
+        The `Authorization` header should be in format:
+        ```
+        Discogs key={A_CONSUMER_KEY}, secret={A_CONSUMER_SECRET}
+        ```
+      type: apiKey
+      name: Authorization
+      in: header
+    OAuth:
+      description: |
+        OAuth 1.0a flow for third-party applications. 
+        
+        This is a placeholder as OpenAPI 3.1 does not directly support OAuth 1.0a. 
+        
+        The `Authorization` header should be constructed according to OAuth 1.0a specs, for example: `OAuth oauth_consumer_key="...", oauth_nonce="...", ...`
+      type: http
+      scheme: oauth
+    Token:
+      description: |
+        Discogs authentication using a personal access token. 
+        
+        The `Authorization` header should be in format:
+        ```
+        Discogs token={YOUR_PERSONAL_ACCESS_TOKEN}
+        ```
+      type: apiKey
+      name: Authorization
+      in: header
