@@ -8,6 +8,26 @@
 
 ## Topics
 
-### <!--@START_MENU_TOKEN@-->Group<!--@END_MENU_TOKEN@-->
+### Clients
 
-- <!--@START_MENU_TOKEN@-->``Symbol``<!--@END_MENU_TOKEN@-->
+- ``Client``
+
+### Servers
+
+- ``Servers/Server1``
+
+### Authentication
+
+- ``AuthMiddleware``
+- ``AuthMethod``
+- ``AuthTransport``
+
+### Types
+
+- ``Components``
+- ``Operations``
+- ``Servers``
+
+### Protocols
+
+- ``APIProtocol``
