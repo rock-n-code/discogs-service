@@ -31,6 +31,8 @@ extension String {
         static let authConsumer = "Discogs \(String.Parameter.key)=%@, \(String.Parameter.secret)=%@"
         /// A format for the user authentication header.
         static let authUser = "Discogs \(String.Parameter.token)=%@"
+        /// A format for the user agent header.
+        static let userAgent = "%@/%@ +%@"
     }
 }
 
