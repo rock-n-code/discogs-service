@@ -29,6 +29,17 @@ struct NotEmptyValidationRule: InputValidationRule {
     
 }
 
+// MARK: - Definitions
+
+extension InputValidationRule where Self == NotEmptyValidationRule {
+    
+    // MARK: Constants
+    
+    /// A validation rule that checks whether an input is empty or not.
+    static var notEmpty: Self { .init() }
+    
+}
+
 // MARK: - Helpers
 
 private extension NotEmptyValidationRule {
@@ -53,11 +64,4 @@ private extension NotEmptyValidationRule {
         return true
     }
     
-}
-
-// MARK: - Constants
-
-extension InputValidationRule where Self == NotEmptyValidationRule {
-    /// A validation rule that checks whether an input is empty or not.
-    static var notEmpty: Self { .init() }
 }

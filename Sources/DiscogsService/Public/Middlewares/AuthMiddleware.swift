@@ -19,23 +19,24 @@ import protocol OpenAPIRuntime.ClientMiddleware
 import struct Foundation.URL
 import struct Foundation.URLComponents
 import struct Foundation.URLQueryItem
+import struct HTTPTypes.HTTPField
 import struct HTTPTypes.HTTPFields
 import struct HTTPTypes.HTTPRequest
 import struct HTTPTypes.HTTPResponse
 
-/// A middleware that attaches any defined authentication credentials into the requests for the service.
+/// A middleware that attaches any defined authentication credentials into the requests to the service.
 ///
 /// Please refer to the [Discogs documentation](https://www.discogs.com/developers#page:authentication) for further information.
 public struct AuthMiddleware {
     
     // MARK: Properties
     
-    /// A representation of an authentication method to use to authenticate requests.
-    private let method: AuthMethod
+    /// A header field that contains the authentication information.
+    let authField: HTTPField?
     
-    /// A representation of a transport option to send credentials in requests.
-    private let transport: AuthTransport
-    
+    /// A list of query items that contains the authentication information.
+    let authItems: [URLQueryItem]?
+
     // MARK: Initializers
     
     /// Initializes this middleware.
@@ -45,9 +46,59 @@ public struct AuthMiddleware {
     public init(
         method: AuthMethod = .none,
         transport: AuthTransport
-    ) {
-        self.method = method
-        self.transport = transport
+    ) throws {
+        switch method {
+        case let .consumer(key, secret):
+            let validateKey = ValidateInputUseCase(rules: .notNil, .notEmpty, .secure(.consumerKey))
+            let validateSecret = ValidateInputUseCase(rules: .notNil, .notEmpty, .secure(.consumerSecret))
+            
+            try validateKey(key)
+            try validateSecret(secret)
+            
+            self.authField = switch transport {
+            case .onQuery: nil
+            case .onHeader: .init(
+                name: .authorization,
+                value: .init(format: .Format.authConsumer, key, secret)
+            )}
+            
+            self.authItems = switch transport {
+            case .onHeader: nil
+            case .onQuery: [
+                .init(name: .Parameter.key, value: key),
+                .init(name: .Parameter.secret, value: secret)
+            ]}
+
+        case let .user(token):
+            let validateToken = ValidateInputUseCase(rules: .notNil, .notEmpty, .secure(.userToken))
+            
+            try validateToken(token)
+            
+            self.authField = switch transport {
+            case .onQuery: nil
+            case .onHeader: .init(
+                name: .authorization,
+                value: .init(format: .Format.authUser, token)
+            )}
+            
+            self.authItems = switch transport {
+            case .onHeader: nil
+            case .onQuery: [
+                .init(name: .Parameter.token, value: token)
+            ]
+            }
+
+        case .none:
+            self.authField = nil
+            self.authItems = nil
+        }
+    }
+    
+    // MARK: Computed
+    
+    /// A flag that indicates whether the middleware should authenticate the intercepted request or not.
+    var shouldAuthenticate: Bool {
+        authField != nil || authItems != nil
     }
     
 }
@@ -65,20 +116,8 @@ extension AuthMiddleware: ClientMiddleware {
         operationID: String,
         next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
-        guard method != .none else {
+        guard shouldAuthenticate else {
             return try await next(request, body, baseURL)
-        }
-        
-        let headerFields = if transport == .onHeader {
-            authenticateHeader(request.headerFields)
-        } else {
-            request.headerFields
-        }
-        
-        let path = if transport == .onQuery {
-            authenticatePath(request.path)
-        } else {
-            request.path
         }
 
         return try await next(
@@ -86,8 +125,8 @@ extension AuthMiddleware: ClientMiddleware {
                 method: request.method,
                 scheme: request.scheme,
                 authority: request.authority,
-                path: path,
-                headerFields: headerFields
+                path: authenticatePath(request.path),
+                headerFields: authenticateHeader(request.headerFields)
             ),
             body,
             baseURL
@@ -104,21 +143,14 @@ private extension AuthMiddleware {
     
     /// Adds an authorization header to the existing header fields.
     /// - Parameter fields: A set of header fields to update.
-    /// - Returns: An updated set of header fields.
+    /// - Returns: An updated set of header fields including the authorization header.
     func authenticateHeader(_ fields: HTTPFields) -> HTTPFields {
         var fields = fields
-        
-        let authorization: String = switch method {
-        case let .consumer(key, secret): .init(format: .Format.authConsumer, key, secret)
-        case let .user(token): .init(format: .Format.authUser, token)
-        default: .empty
+
+        if let authField {
+            fields.append(authField)
         }
-        
-        fields.append(.init(
-            name: .authorization,
-            value: authorization
-        ))
-        
+
         return fields
     }
     
@@ -127,23 +159,13 @@ private extension AuthMiddleware {
     /// - Returns: An updated request path including the authentication parameters.
     func authenticatePath(_ path: String?) -> String? {
         guard
+            let authItems,
             let path,
             var urlComponents = URLComponents(string: path)
         else {
             return path
         }
-        
-        let authItems: [URLQueryItem] = switch method {
-        case let .consumer(key, secret): [
-            .init(name: .Parameter.key, value: key),
-            .init(name: .Parameter.secret, value: secret)
-        ]
-        case let .user(token): [
-            .init(name: .Parameter.token, value: token)
-        ]
-        default: []
-        }
-        
+
         var queryItems = urlComponents.queryItems ?? []
         
         queryItems.append(contentsOf: authItems)
@@ -157,4 +179,13 @@ private extension AuthMiddleware {
         }
     }
     
+}
+
+// MARK: - Constants
+
+private extension String.Format {
+    /// A format for the consumer authentication header.
+    static let authConsumer = "Discogs \(String.Parameter.key)=%@, \(String.Parameter.secret)=%@"
+    /// A format for the user authentication header.
+    static let authUser = "Discogs \(String.Parameter.token)=%@"
 }

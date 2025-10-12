@@ -29,6 +29,17 @@ struct NotNilValidationRule: InputValidationRule {
     
 }
 
+// MARK: - Definitions
+
+extension InputValidationRule where Self == NotNilValidationRule {
+    
+    // MARK: Constants
+    
+    /// A validation rule that checks whether an input is nil or not.
+    static var notNil: Self { .init() }
+    
+}
+
 // MARK: - Helpers
 
 private extension NotNilValidationRule {
@@ -43,18 +54,11 @@ private extension NotNilValidationRule {
     /// - Returns: A flag that indicates whether a given input has been validated or not.
     /// - Throws: An error of type ``InputValidatorError`` in case the validation failed.
     func validate(input: String?) throws -> Bool {
-        guard let input else {
+        guard input != nil else {
             throw InputValidationError.inputIsNil
         }
         
         return true
     }
 
-}
-
-// MARK: - Constants
-
-extension InputValidationRule where Self == NotNilValidationRule {
-    /// A validation rule that checks whether an input is nil or not.
-    static var notNil: Self { .init() }
 }

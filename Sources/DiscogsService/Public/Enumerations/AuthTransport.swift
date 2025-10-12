@@ -13,7 +13,7 @@
 // ===----------------------------------------------------------------------===
 
 /// A representation of the available transport options to send credentials in authenticated requests.
-public enum AuthTransport: Sendable {
+public enum AuthTransport: CaseIterable, Sendable {
     /// Authentication credential are sent in a request as an `Authentication` header.
     ///
     /// This means that the header will be added to any existing header in a request, like this:

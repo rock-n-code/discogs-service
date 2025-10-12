@@ -18,4 +18,10 @@ enum InputValidationError: Error {
     case inputIsEmpty
     /// An input is nil.
     case inputIsNil
+    /// An input does not comply with the consumer key requirements.
+    case inputNotConsumerKey
+    /// An input does not comply with the consumer secret requirements.
+    case inputNotConsumerSecret
+    /// An input does not comply with the user token requirements.
+    case inputNotUserToken
 }

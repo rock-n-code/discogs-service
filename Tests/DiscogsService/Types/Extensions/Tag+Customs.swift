@@ -21,4 +21,7 @@ extension Tag {
     /// A tag that indicates tests for a middleware type.
     @Tag static var middleware: Self
     
+    /// A tag that indicates tests for a use case type.
+    @Tag static var useCase: Self
+    
 }
