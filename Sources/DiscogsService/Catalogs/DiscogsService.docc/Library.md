@@ -14,7 +14,7 @@
 
 ### Servers
 
-- ``Servers/Server1``
+- ``LiveService``
 
 ### Authentication
 

@@ -521,6 +521,38 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
   /releases/{release_id}/rating/{username}:
+    delete: 
+      tags:
+        - Database
+      summary: Delete information about a rating of release by a user.
+      description: |
+        Updates a rating of a release for a given user. 
+        
+        This endpoint requires authentication.
+      operationId: deleteReleaseRatingByUser
+      parameters: 
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/Username'
+      security:
+        - Token: []
+        - KeySecret: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully deleted a rating for a specific release by a given user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
     get:
       tags:
         - Database
@@ -546,6 +578,43 @@ paths:
                 $ref: '#/components/schemas/ReleaseRatingByUser'
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      tags: 
+        - Database
+      summary: Update information about a rating of release by a user.
+      description: |
+        Updates a rating of a release for a given user. 
+        
+        This endpoint requires authentication.
+      operationId: putReleaseRatingByUser
+      parameters: 
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/Rating'
+      security:
+        - Token: []
+        - KeySecret: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully updated a rating for a specific release by a given user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseRatingByUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /releases/{release_id}/stats:
     get:
       tags:
@@ -580,7 +649,7 @@ paths:
                     required:
                       - is_offensive
         '404':
-          $ref: '#/components/responses/NotFound'    
+          $ref: '#/components/responses/NotFound'
   /database/search:
     get:
       tags:
@@ -856,12 +925,15 @@ components:
         type: integer
         minimum: 1
         maximum: 100
-    Released:
-      description: A filter by release year.
-      name: released
+    Rating:
+      description: A number (between 1 and 5) for a rating of a release.
+      name: rating
       in: query
+      required: true
       schema:
-        type: string    
+        type: integer
+        minimum: 1
+        maximum: 5
     ReleaseId:
       description: An identifier of a release.
       name: release_id
@@ -870,6 +942,12 @@ components:
       schema:
         type: integer
       example: 249504
+    Released:
+      description: A filter by release year.
+      name: released
+      in: query
+      schema:
+        type: string    
     SortOrder:
       description: The order to sort the results. 
       name: sort_order
