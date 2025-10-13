@@ -345,6 +345,10 @@ paths:
 
         For further details about this process, please refer to the [OAuth flow](https://www.discogs.com/developers#page:authentication,header:authentication-oauth-flow) section in the [Discogs API authentication](https://www.discogs.com/developers#page:authentication) documentation.
       operationId: getUserIdentity
+      security:
+        - Token: []
+        - KeySecret: []
+        - OAuth: []
       responses:
         '200':
           description: Successfully retrieved information about an authenticated user.
@@ -361,6 +365,153 @@ paths:
                 $ref: '#/components/schemas/UserIdentity'
         '401':
           $ref: '#/components/responses/Unauthorized'
+  /database/search:
+    get:
+      tags:
+        - Database
+      summary: Search any information from the database.
+      description: |
+        Issue a search query to the Discogs database. 
+        
+        This endpoint supports pagination and also, it requires authentication.
+      operationId: searchDatabase
+      parameters:
+        - name: query
+          description: A query to search for.
+          in: query
+          schema:
+            type: string
+        - name: type
+          description: A type of resource to search for.
+          in: query
+          schema:
+            type: string
+            enum: 
+              - release
+              - master
+              - artist
+              - label
+        - name: title
+          description: |
+            A title to search for.
+
+            This parameter can be combined with the `name` query parameter.
+          in: query
+          schema:
+            type: string
+        - name: release_title
+          description: A release title to search for.
+          in: query
+          schema:
+            type: string
+        - name: credit
+          in: query
+          description: Some credits to search for.
+          schema:
+            type: string
+        - name: artist
+          description: An artist name to search for.
+          in: query
+          schema:
+            type: string
+        - name: anv
+          description: A ANV (Artist Name Variation) to search for.
+          in: query
+          schema:
+            type: string
+        - name: label
+          description: A label name to search for.
+          in: query
+          schema:
+            type: string
+        - name: genre
+          description: A music genre to search for.
+          in: query
+          schema:
+            type: string
+        - name: style
+          description: A musical style to search for.
+          in: query
+          schema:
+            type: string
+        - name: country
+          description: A country to search for.
+          in: query
+          schema:
+            type: string
+        - name: year
+          description: A release year to search for.
+          in: query
+          schema:
+            type: string
+        - name: format
+          description: A release format to search for.
+          in: query
+          schema:
+            type: string
+        - name: catno
+          description: A catalogg number to search for.
+          in: query
+          schema:
+            type: string
+        - name: barcode
+          description: A barcode number to search for.
+          in: query
+          schema:
+            type: string
+        - name: track
+          description: A track title to search for.
+          in: query
+          schema:
+            type: string
+        - name: submitter
+          description: A username of a submitter to search for.
+          in: query
+          schema:
+            type: string
+        - name: contributor
+          description: A username of a contributor to search for.
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      security:
+        - Token: []
+        - KeySecret: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved search results.
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  results:
+                    description: A list of artist, label, master and/or release search results.
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/ReleaseResult'
+                        - $ref: '#/components/schemas/MasterResult'
+                        - $ref: '#/components/schemas/ArtistResult'
+                        - $ref: '#/components/schemas/LabelResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /artists/{artist_id}:
     get:
       tags:
@@ -616,38 +767,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
   /releases/{release_id}/rating/{username}:
-    delete: 
-      tags:
-        - Database
-      summary: Delete information about a rating of release by a user.
-      description: |
-        Updates a rating of a release for a given user. 
-        
-        This endpoint requires authentication.
-      operationId: deleteReleaseRatingByUser
-      parameters: 
-        - $ref: '#/components/parameters/ReleaseId'
-        - $ref: '#/components/parameters/Username'
-      security:
-        - Token: []
-        - KeySecret: []
-        - OAuth: []
-      responses:
-        '200':
-          description: Successfully deleted a rating for a specific release by a given user.
-          headers:
-            X-Discogs-RateLimit:
-              $ref: '#/components/headers/RateLimit'
-            X-Discogs-RateLimit-Used:
-              $ref: '#/components/headers/RateLimitUsed'
-            X-Discogs-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
     get:
       tags:
         - Database
@@ -710,6 +829,38 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+    delete: 
+      tags:
+        - Database
+      summary: Delete information about a rating of release by a user.
+      description: |
+        Updates a rating of a release for a given user. 
+        
+        This endpoint requires authentication.
+      operationId: deleteReleaseRatingByUser
+      parameters: 
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/Username'
+      security:
+        - Token: []
+        - KeySecret: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully deleted a rating for a specific release by a given user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /releases/{release_id}/stats:
     get:
       tags:
@@ -745,153 +896,6 @@ paths:
                       - is_offensive
         '404':
           $ref: '#/components/responses/NotFound'
-  /database/search:
-    get:
-      tags:
-        - Database
-      summary: Search any information from the database.
-      description: |
-        Issue a search query to the Discogs database. 
-        
-        This endpoint supports pagination and also, it requires authentication.
-      operationId: searchDatabase
-      parameters:
-        - name: query
-          description: A query to search for.
-          in: query
-          schema:
-            type: string
-        - name: type
-          description: A type of resource to search for.
-          in: query
-          schema:
-            type: string
-            enum: 
-              - release
-              - master
-              - artist
-              - label
-        - name: title
-          description: |
-            A title to search for.
-
-            This parameter can be combined with the `name` query parameter.
-          in: query
-          schema:
-            type: string
-        - name: release_title
-          description: A release title to search for.
-          in: query
-          schema:
-            type: string
-        - name: credit
-          in: query
-          description: Some credits to search for.
-          schema:
-            type: string
-        - name: artist
-          description: An artist name to search for.
-          in: query
-          schema:
-            type: string
-        - name: anv
-          description: A ANV (Artist Name Variation) to search for.
-          in: query
-          schema:
-            type: string
-        - name: label
-          description: A label name to search for.
-          in: query
-          schema:
-            type: string
-        - name: genre
-          description: A music genre to search for.
-          in: query
-          schema:
-            type: string
-        - name: style
-          description: A musical style to search for.
-          in: query
-          schema:
-            type: string
-        - name: country
-          description: A country to search for.
-          in: query
-          schema:
-            type: string
-        - name: year
-          description: A release year to search for.
-          in: query
-          schema:
-            type: string
-        - name: format
-          description: A release format to search for.
-          in: query
-          schema:
-            type: string
-        - name: catno
-          description: A catalogg number to search for.
-          in: query
-          schema:
-            type: string
-        - name: barcode
-          description: A barcode number to search for.
-          in: query
-          schema:
-            type: string
-        - name: track
-          description: A track title to search for.
-          in: query
-          schema:
-            type: string
-        - name: submitter
-          description: A username of a submitter to search for.
-          in: query
-          schema:
-            type: string
-        - name: contributor
-          description: A username of a contributor to search for.
-          in: query
-          schema:
-            type: string
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/PerPage'
-      security:
-        - Token: []
-        - KeySecret: []
-        - OAuth: []
-      responses:
-        '200':
-          description: Successfully retrieved search results.
-          headers:
-            Link:
-              $ref: '#/components/headers/Link'
-            X-Discogs-RateLimit:
-              $ref: '#/components/headers/RateLimit'
-            X-Discogs-RateLimit-Used:
-              $ref: '#/components/headers/RateLimitUsed'
-            X-Discogs-RateLimit-Remaining:
-              $ref: '#/components/headers/RateLimitRemaining'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  pagination:
-                    $ref: '#/components/schemas/Pagination'
-                  results:
-                    description: A list of artist, label, master and/or release search results.
-                    type: array
-                    items:
-                      oneOf:
-                        - $ref: '#/components/schemas/ReleaseResult'
-                        - $ref: '#/components/schemas/MasterResult'
-                        - $ref: '#/components/schemas/ArtistResult'
-                        - $ref: '#/components/schemas/LabelResult'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
 components:
   headers:
     Link:
