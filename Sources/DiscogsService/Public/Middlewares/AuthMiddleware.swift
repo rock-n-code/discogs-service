@@ -43,6 +43,7 @@ public struct AuthMiddleware {
     /// - Parameters:
     ///   - method: A representation of an authentication method to use to authenticate requests.
     ///   - transport: A representation of a transport option to send credentials in requests.
+    /// - Throws: An error of type ``InputValidationError`` in case an input failed any validation.
     public init(
         method: AuthMethod = .none,
         transport: AuthTransport

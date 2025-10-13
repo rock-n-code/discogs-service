@@ -18,6 +18,9 @@ extension Tag {
     
     // MARK: Constants
     
+    /// A tag that indicates tests for a type extension.
+    @Tag static var `extension`: Self
+    
     /// A tag that indicates tests for a middleware type.
     @Tag static var middleware: Self
     

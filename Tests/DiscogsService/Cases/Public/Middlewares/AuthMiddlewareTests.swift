@@ -15,7 +15,6 @@
 import struct Foundation.URL
 import struct Foundation.URLComponents
 import struct Foundation.URLQueryItem
-import struct HTTPTypes.HTTPField
 import struct HTTPTypes.HTTPFields
 import struct HTTPTypes.HTTPRequest
 import struct HTTPTypes.HTTPResponse
@@ -28,6 +27,7 @@ import Testing
 struct AuthMiddlewareTests {
     
     // MARK: Initializers tests
+
 #if swift(>=6.2)
     @Test(arguments: Input.authMethods)
     func `initialize`(
@@ -273,11 +273,11 @@ private extension AuthMiddlewareTests {
         }
     }
 
-    /// Asserts the error throwing (if justified) during the initialization of the middleware.
+    /// Asserts the error throwing (if justified) during the initialization of a middleware.
     /// - Parameters:
     ///   - authMethod: A representation of an authentication method.
     ///   - authTransport: A representation of an authentication transport.
-    ///   - error: An expected error of type ``InputValidationError`` during the initialization of the middleware.
+    ///   - error: An expected error of type ``InputValidationError`` during the initialization of a middleware.
     func assertInitThrows(
         authMethod: AuthMethod,
         authTransport: AuthTransport,
@@ -331,8 +331,8 @@ private extension AuthMiddlewareTests {
             try await middleware.intercept(
                 request,
                 body: nil,
-                baseURL: .baseURL,
-                operationID: .operationId
+                baseURL: .Sample.baseURL,
+                operationID: .Sample.operationId
             ) { request, _, _ in
                 // THEN
                 switch (authMethod, authTransport) {
@@ -430,31 +430,6 @@ private extension AuthMiddlewareTests {
     
 }
 
-private extension HTTPRequest {
-    
-    // MARK: Initializers
-    
-    /// Initializes a HTTP request conveniently.
-    /// - Parameters:
-    ///   - method: A request method.
-    ///   - path: A value of the “:path” pseudo header field.
-    ///   - headerFields: A dictionary of request header fields.
-    init(
-        method: HTTPRequest.Method = .get,
-        path: String?,
-        headerFields: HTTPFields = [:]
-    ) {
-        self.init(
-            method: method,
-            scheme: nil,
-            authority: nil,
-            path: path,
-            headerFields: headerFields
-        )
-    }
-    
-}
-
 // MARK: - Constants
 
 private extension Input {
@@ -464,7 +439,7 @@ private extension Input {
         .user(token: "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"),
         .none
     ]
-    /// A list of authentication methods to tests for the initialization throw test cases.
+    /// A list of authentication methods to use in the initialization throw test cases.
     static let authMethodsThrows: [AuthMethod] = authMethods + [
         .consumer(key: .empty, secret: "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpP"),
         .consumer(key: "aAbBcCdDeEfFgGhHiI", secret: "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpP"),
@@ -486,14 +461,4 @@ private extension Output {
     static let authMethodsThrows: [InputValidationError?] = [nil, nil, nil, .inputIsEmpty, .inputNotConsumerKey, .inputNotConsumerKey, .inputNotConsumerKey, .inputIsEmpty, .inputNotConsumerSecret, .inputNotConsumerSecret, .inputNotConsumerSecret, .inputIsEmpty, .inputNotUserToken, .inputNotUserToken, .inputNotUserToken]
     /// A list of expected boolean flags coming from the should authenticate test cases.
     static let authMethodsShouldAuthenticate: [Bool] = [true, true, false]
-}
-
-private extension String {
-    /// An operation ID sample.
-    static let operationId = "SomeOperationId"
-}
-
-private extension URL {
-    /// A base URL sample.
-    static let baseURL = URL(string: "https://sample.domain.com")!
 }

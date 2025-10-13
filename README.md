@@ -13,7 +13,7 @@ To use this library, then add it as a dependency in the `Package.swift` file of 
 let package = Package(
     // name, platforms, products, etc.
     dependencies: [
-        .package(url: "https://github.com/rock-n-code/discogs-service", from: "0.2.0"),
+        .package(url: "https://github.com/rock-n-code/discogs-service", from: "0.3.0"),
         // other dependencies
     ],
     targets: [

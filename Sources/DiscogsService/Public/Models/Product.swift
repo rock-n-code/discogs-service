@@ -33,8 +33,8 @@ public struct Product: Sendable {
     /// Initializes this model.
     /// - Parameters:
     ///   - name: A camel-cased name of a product.
-    ///   - version: A URI link related to a product.
-    ///   - url: A semantic version of a product.
+    ///   - version: A semantic version of a product.
+    ///   - url: A URI link related to a product.
     public init(
         name: String,
         version: String,

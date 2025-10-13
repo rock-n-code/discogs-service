@@ -22,6 +22,12 @@
 - ``AuthMethod``
 - ``AuthTransport``
 
+### User Agent
+
+- ``UserAgentMiddleware``
+- ``Product``
+- ``InputValidationError``
+
 ### Types
 
 - ``Components``
