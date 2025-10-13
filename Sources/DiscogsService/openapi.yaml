@@ -253,6 +253,13 @@ paths:
       responses: 
         '200':
           description: Service information returned successfully.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -271,6 +278,13 @@ paths:
       responses:
         '200':
           description: Successfully retrieved artist details.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -299,6 +313,12 @@ paths:
           headers:
             Link:
               $ref: '#/components/headers/Link'
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -324,6 +344,13 @@ paths:
       responses:
         '200':
           description: Successfully retrieved label details.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -347,9 +374,15 @@ paths:
       responses:  
         '200':  
           description: A paginated list of the label's releases.  
-          headers:  
-            Link:  
-              $ref: '#/components/headers/Link'  
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:  
             application/json:  
               schema:  
@@ -378,6 +411,13 @@ paths:
       responses:
         '200':
           description: Successfully retrieved master release details.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -410,6 +450,12 @@ paths:
           headers:
             Link:
               $ref: '#/components/headers/Link'
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -436,6 +482,13 @@ paths:
       responses:
         '200':
           description: Successfully retrieved release details.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -454,6 +507,13 @@ paths:
       responses:
         '200':
           description: Successfully retrieved release rating details.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -473,6 +533,13 @@ paths:
       responses:
         '200':
           description: Successfully retrieved release rating details by a given user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -494,6 +561,13 @@ paths:
             Successfully retrieved release rating details by a given user.
 
             > warning: There is a discrepancy about this response between was is documented and what the endpoints actually responds. In the [documentation](https://www.discogs.com/developers#page:database,header:database-release-stats), it is defined that a type containing a statistical data would be returned but the actual response returns an object that contains a boolean flag instead.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -628,6 +702,12 @@ paths:
           headers:
             Link:
               $ref: '#/components/headers/Link'
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
           content:
             application/json:
               schema:
@@ -658,6 +738,31 @@ components:
       schema:
         type: string
         example: <https://api.discogs.com/artists/1/releases?page=2&per_page=75>; rel="next", <https://api.discogs.com/artists/1/releases?page=30&per_page=75>; rel="last"
+      required: true
+    RateLimit:
+      description: A total number of requests that can be made in a minute window.
+      schema:
+        type: integer
+        minimum: 25
+        maximum: 60
+        example: 60
+      required: true
+    RateLimitRemaining:
+      description: A number of remaining requests that can be made in an existing rate limit window.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 60
+        example: 59
+      required: true
+    RateLimitUsed:
+      description: A number of requests that have been made in an existing rate limit window.
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 60
+        example: 1
+      required: true
   parameters:
     ArtistId:
       name: artist_id

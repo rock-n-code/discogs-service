@@ -26,13 +26,16 @@
 
 - ``UserAgentMiddleware``
 - ``Product``
-- ``InputValidationError``
 
 ### Types
 
 - ``Components``
 - ``Operations``
 - ``Servers``
+
+### Errors
+
+- ``InputValidationError``
 
 ### Protocols
 
