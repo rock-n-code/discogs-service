@@ -7,6 +7,15 @@
 - ``APIProtocol/getService(_:)``
 - ``APIProtocol/getService(headers:)``
 
+### Authentication endpoints
+
+- ``APIProtocol/getRequestToken(_:)``
+- ``APIProtocol/getRequestToken(headers:)``
+- ``APIProtocol/postAccessToken(_:)``
+- ``APIProtocol/postAccessToken(headers:)``
+- ``APIProtocol/getUserIdentity(_:)``
+- ``APIProtocol/getUserIdentity(headers:)``
+
 ### Database endpoints
 
 - ``APIProtocol/searchDatabase(_:)``

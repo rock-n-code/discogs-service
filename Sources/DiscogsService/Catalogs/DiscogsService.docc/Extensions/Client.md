@@ -10,6 +10,12 @@
 
 - ``Client/getService(_:)``
 
+### Authentication endpoints
+
+- ``Client/getRequestToken(_:)``
+- ``Client/postAccessToken(_:)``
+- ``Client/getUserIdentity(_:)``
+
 ### Database endpoints
 
 - ``Client/searchDatabase(_:)``

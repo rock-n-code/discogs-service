@@ -227,7 +227,9 @@ servers:
     description: Live Server
 tags:
   - name: Service
-    description: Access data related to the service.
+    description: Access data on the service.
+  - name: Authentication
+    description: Access data on authenticating to the service.
   - name: Database
     description: Access data on artists, labels, and releases.    
   - name: Marketplace
@@ -266,13 +268,106 @@ paths:
                 $ref: '#/components/schemas/Service'
         '500':
           $ref: '#/components/responses/Unavailable'
+  /oauth/request_token:
+    get:
+      tags:
+        - Authentication
+      summary: Get details about a OAuth request token.
+      description: |
+        Retrieve a request token to initialize an *OAuth* authentication process.
+
+        This endpoint represents the [2nd step of the OAuth flow process](https://www.discogs.com/developers#header-2.-send-a-get-request-to-the-discogs-request-token-url), thus it requires to configure an *Authorization* header to have a value like this:
+        
+        ```
+        OAuth oauth_consumer_key="your_consumer_key", oauth_nonce="random_string_or_timestamp", oauth_signature="your_consumer_secret&", oauth_signature_method="PLAINTEXT", oauth_timestamp="current_timestamp", oauth_callback="your_callback"
+        ```
+
+        For further details about this process, please refer to the [OAuth flow](https://www.discogs.com/developers#page:authentication,header:authentication-oauth-flow) section in the [Discogs API authentication](https://www.discogs.com/developers#page:authentication) documentation.
+      operationId: getRequestToken
+      parameters:
+        - $ref: '#/components/parameters/ContentType'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/UserAgent'
+      responses:
+        '200':
+          description: |
+            Successfully retrieved request token details.
+
+            With this request token, then it is possible to continue with the [next step in the OAuth flow](https://www.discogs.com/developers#header-3.-redirect-your-user-to-the-discogs-authorize-page) process.
+          headers:
+            oauth_token:
+              $ref: '#/components/headers/OAuthToken'
+            oauth_token_secret: 
+              $ref: '#/components/headers/OAuthSecret'
+            oauth_callback-confirmed:
+              $ref: '#/components/headers/OAuthCallback'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /oauth/access_token:
+    post:
+      tags:
+        - Authentication
+      summary: Provide required credentials data to obtain an access token.
+      description: |
+        Provide to the service some required credentials details to obtain an access token at the end of the *OAuth* process.
+
+        This endpoint represents the [4th step of the OAuth flow process](https://www.discogs.com/developers#header-4.-send-a-post-request-to-the-discogs-access-token-url), thus it requires to configure an *Authorization* header to have a value like this:
+        
+        ```
+        OAuth oauth_consumer_key="your_consumer_key", oauth_nonce="random_string_or_timestamp", oauth_token="oauth_token_received_from_step_2" oauth_signature="your_consumer_secret&", oauth_signature_method="PLAINTEXT", oauth_timestamp="current_timestamp", oauth_verifier="users_verifier"
+        ```
+
+        For further details about this process, please refer to the [OAuth flow](https://www.discogs.com/developers#page:authentication,header:authentication-oauth-flow) section in the [Discogs API authentication](https://www.discogs.com/developers#page:authentication) documentation.
+      operationId: postAccessToken
+      parameters:
+        - $ref: '#/components/parameters/ContentType'
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/UserAgent'
+      responses:
+        '200':
+          description: Successfully retrieved an access token at the end of the OAuth authentication process.
+          headers:
+            oauth_token:
+              $ref: '#/components/headers/OAuthToken'
+            oauth_token_secret: 
+              $ref: '#/components/headers/OAuthSecret'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /oauth/identity:
+    get:
+      tags:
+        - Authentication
+      summary: Get information about an authenticated user.
+      description: |
+        Retrieve basic information about the authenticated user.
+
+        This endpoint represents the (optional) [5th step of the OAuth flow process](https://www.discogs.com/developers#header-5-send-authenticated-requests-to-discogs-endpoints), as it is advised to perform a sanity check to ensure the *OAuth* process finished successfully.
+
+        For further details about this process, please refer to the [OAuth flow](https://www.discogs.com/developers#page:authentication,header:authentication-oauth-flow) section in the [Discogs API authentication](https://www.discogs.com/developers#page:authentication) documentation.
+      operationId: getUserIdentity
+      responses:
+        '200':
+          description: Successfully retrieved information about an authenticated user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserIdentity'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /artists/{artist_id}:
     get:
-      summary: Get information about an artist.
-      operationId: getArtist
-      description: Retrieves any available information for a specific artist.
       tags:
         - Database
+      summary: Get information about an artist.
+      description: Retrieves any available information for a specific artist.
+      operationId: getArtist
       parameters:
         - $ref: '#/components/parameters/ArtistId'
       responses:
@@ -808,6 +903,19 @@ components:
         type: string
         example: <https://api.discogs.com/artists/1/releases?page=2&per_page=75>; rel="next", <https://api.discogs.com/artists/1/releases?page=30&per_page=75>; rel="last"
       required: true
+    OAuthCallback:
+      description: An OAuth callback confirmed.
+      schema:
+        type: boolean
+        default: true
+    OAuthSecret:
+      description: An OAuth request token secret.
+      schema:
+        type: string
+    OAuthToken:
+      description: An OAuth request token.
+      schema:
+        type: string
     RateLimit:
       description: A total number of requests that can be made in a minute window.
       schema:
@@ -852,6 +960,23 @@ components:
           - year
           - title
           - format
+    Authorization:
+      name: Authorization
+      description: A string to authenticate a user with a service by carrying credentials.
+      in: header
+      required: true
+      schema:
+        type: string
+    ContentType:
+      name: Content-Type
+      description: A content type for a response.
+      in: header
+      required: true
+      schema:
+        type: string
+        enum:
+          - application/json
+          - application/x-www-form-urlencoded
     Country:
       description: A filter by country.
       name: country
@@ -958,6 +1083,13 @@ components:
         enum: 
           - asc
           - desc
+    UserAgent:
+      name: User-Agent
+      description: A name of a software agent responsible for interacting with the service.
+      in: header
+      required: true
+      schema:
+        type: string
     Username:
       description: A username of a user.
       name: username
@@ -1940,6 +2072,15 @@ components:
         - id
         - resource_url
         - username
+    UserIdentity:
+      description: A type that represents a user identity.
+      allOf:
+        - $ref: '#/components/schemas/UserId'
+        - type: object
+          properties:
+            consumer_name:
+              description: A name of an application a user utilizes to interacts with the service.
+              type: string
     Video:
       description: A type that represents a video.
       type: object
