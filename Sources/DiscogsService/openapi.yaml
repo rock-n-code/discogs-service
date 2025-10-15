@@ -346,8 +346,8 @@ paths:
         For further details about this process, please refer to the [OAuth flow](https://www.discogs.com/developers#page:authentication,header:authentication-oauth-flow) section in the [Discogs API authentication](https://www.discogs.com/developers#page:authentication) documentation.
       operationId: getUserIdentity
       security:
-        - Token: []
-        - KeySecret: []
+        - UserToken: []
+        - ConsumerKeySecret: []
         - OAuth: []
       responses:
         '200':
@@ -477,8 +477,8 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
       security:
-        - Token: []
-        - KeySecret: []
+        - UserToken: []
+        - ConsumerKeySecret: []
         - OAuth: []
       responses:
         '200':
@@ -508,6 +508,9 @@ paths:
                         - $ref: '#/components/schemas/MasterResult'
                         - $ref: '#/components/schemas/ArtistResult'
                         - $ref: '#/components/schemas/LabelResult'
+                required:
+                  - pagination
+                  - results
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -576,6 +579,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/ArtistRelease'
+                required:
+                  - pagination
+                  - releases
         '404':
           $ref: '#/components/responses/NotFound'
   /labels/{label_id}:
@@ -640,6 +646,9 @@ paths:
                     type: array  
                     items:  
                       $ref: '#/components/schemas/LabelRelease'
+                required:
+                  - pagination
+                  - releases
         '404':  
           $ref: '#/components/responses/NotFound'  
   /masters/{master_id}:
@@ -713,6 +722,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/ReleaseVersion'
+                required:
+                  - pagination
+                  - versions
         '404':
           $ref: '#/components/responses/NotFound'
   /releases/{release_id}:
@@ -806,8 +818,8 @@ paths:
         - $ref: '#/components/parameters/Username'
         - $ref: '#/components/parameters/Rating'
       security:
-        - Token: []
-        - KeySecret: []
+        - UserToken: []
+        - ConsumerKeySecret: []
         - OAuth: []
       responses:
         '200':
@@ -842,8 +854,8 @@ paths:
         - $ref: '#/components/parameters/ReleaseId'
         - $ref: '#/components/parameters/Username'
       security:
-        - Token: []
-        - KeySecret: []
+        - UserToken: []
+        - ConsumerKeySecret: []
         - OAuth: []
       responses:
         '200':
@@ -896,6 +908,158 @@ paths:
                       - is_offensive
         '404':
           $ref: '#/components/responses/NotFound'
+  /users/{username}:
+    get:
+      tags:
+        - User Identity
+      summary: Get information about a user.
+      description: |
+        Retrieves a user profile by username.
+
+        In case of being authenticated as the requested user, the `email` property will be visible, and the `num_list` count will also include a user's private lists.
+        
+        In case of being authenticated as the requested user, or a user's collection or wantlist is public, the `num_collection` and the `num_wantlist` properties will also be visible.
+      operationId: getUserProfile
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '200':
+          description: Successfully retrieved profile user information by a given username.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - User Identity
+      summary: Update information about a user.
+      description: |
+        Edits some user profile information by username.
+
+        This endpoint requires authentication.
+      operationId: postUserProfile
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/Name'
+        - $ref: '#/components/parameters/HomePage'
+        - $ref: '#/components/parameters/Location'
+        - $ref: '#/components/parameters/Profile'
+        - $ref: '#/components/parameters/Currency'
+      security:
+        - UserToken: []
+        - ConsumerKeySecret: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved an updated profile user information by a given username.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/contributions:
+    get:
+      tags:
+        - User Identity
+      summary: Get contributions of a user.
+      description: |
+        Retrieves all the contributions or additions to releases, labels, and artist done by username.
+
+        This endpoints accepts pagination headers.
+      operationId: getUserContributions
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/SortField'
+        - $ref: '#/components/parameters/SortOrder'
+      responses:
+        '200':
+          description: Successfully retrieved items contributed by a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  submissions:
+                    description: A type that represents all items submitted by a user.
+                    $ref: '#/components/schemas/UserItems'
+                required:
+                  - pagination
+                  - contributions
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/submissions:
+    get:
+      tags:
+        - User Identity
+      summary: Get submissions of a user.
+      description: |
+        Retrieves all the submissions or edits to releases, labels, and artist done by username.
+
+        This endpoints accepts pagination headers.
+      operationId: getUserSubmissions
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '200':
+          description: Successfully retrieved items submitted by a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  submissions:
+                    description: A type that represents all items edited by a user.
+                    $ref: '#/components/schemas/UserItems'
+                required:
+                  - pagination
+                  - submissions
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
 components:
   headers:
     Link:
@@ -1002,6 +1166,14 @@ components:
       in: query
       schema:
         type: string
+    HomePage:
+      description: A URI to a website of a user.
+      name: home_page
+      in: query
+      schema:
+        type: string
+        format: uri
+      example: https://www.some-home.page
     Label:
       description: A filter by label.
       name: label
@@ -1016,6 +1188,13 @@ components:
       schema:
         type: integer
       example: 1
+    Location:
+      description: A geographical location of a user.
+      name: location
+      in: query
+      schema:
+        type: string
+      example: Planet Earth
     MasterId:
       description: An identifier of a master.
       name: master_id
@@ -1037,6 +1216,13 @@ components:
           - label
           - catno
           - country
+    Name: 
+      description: A real name of a user.
+      name: name
+      in: query
+      schema: 
+        type: string
+      example: Some real name
     Page:
       description: A number of page of results to return.
       name: page
@@ -1054,6 +1240,13 @@ components:
         type: integer
         minimum: 1
         maximum: 100
+    Profile:
+      description: A biographical information about a user.
+      name: profile
+      in: query
+      schema:
+        type: string
+      example: Some biographical information about a user goes here...
     Rating:
       description: A number (between 1 and 5) for a rating of a release.
       name: rating
@@ -1077,11 +1270,25 @@ components:
       in: query
       schema:
         type: string    
+    SortField:
+      description: A filter by field.
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum:
+          - label
+          - artist
+          - title
+          - catno
+          - format
+          - rating
+          - year
+          - added
     SortOrder:
       description: The order to sort the results. 
       name: sort_order
       in: query
-      required: false
       schema:
         type: string
         enum: 
@@ -1116,6 +1323,14 @@ components:
             Malformed:
               value:
                 message: An internal server error occurred. (Malformed query?)
+    NotAccessable:
+      description: A requested resource cannot be accessed due to a lack of permission.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ServiceError'
+          example:
+            message: You must have permission to access this resource.
     NotFound:
       description: A requested resource cannot be found.
       content:
@@ -1125,7 +1340,7 @@ components:
           example:
             message: Resource not found.
     Unauthorized:
-      description: A requested resource cannot be accessed.
+      description: A requested resource cannot be accessed due to a lack of authentication.
       content:
         application/json:
           schema:
@@ -1754,9 +1969,7 @@ components:
         - status
         - styles
         - title
-        - tracklist
         - uri
-        - videos
     ReleaseFormat:
       description: A type that represents a format of a release.
       type: object
@@ -2073,7 +2286,6 @@ components:
           type: string
           format: uri
       required:
-        - id
         - resource_url
         - username
     UserIdentity:
@@ -2085,6 +2297,183 @@ components:
             consumer_name:
               description: A name of an application a user utilizes to interacts with the service.
               type: string
+    UserItems:
+      description: A type that represents all items added and/or edited by a user.
+      type: object
+      properties:
+        artists:
+          description: A list of artists added and/or edited by a user.
+          type: array
+          items:
+            $ref: '#/components/schemas/Artist'
+        labels:
+          description: A list of labels added and/or edited by a user.
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        releases:
+          description: A list of releases added and/or edited by a user.
+          type: array
+          items:
+            $ref: '#/components/schemas/Release'
+    UserProfile:
+      description: A type that represents a user profile.
+      allOf:
+        - $ref: '#/components/schemas/UserId'
+        - type: object
+          properties:
+            name:
+              description: A real name of a user.
+              type: string
+            email:
+              description: An e-mail address of a user, if any.
+              type: string
+              format: email
+            profile:
+              description: A biographical information of a user.
+              type: string
+            location:
+              description: A geographical location of a user.
+              type: string
+            uri:
+              description: A URL to the resource of a user.
+              type: string
+              format: uri
+            home_page:
+              description: A URI to a website of a user.
+              type: string
+              format: uri
+            registered:
+              description: A date and time a user registered to the service.
+              type: string
+              format: date-time
+            rank:
+              description: A number of rank of a user.
+              type: integer
+            curr_abbr:
+              description: A code of a currency used by a user in the marketplace.
+              type: string
+              minLength: 3
+              maxLength: 3
+            activated:
+              description: A flag that indicates whether a user is active or not.
+              type: boolean
+            marketplace_suspended:
+              description: A flag that indicates whether a user is suspended at the marketplace or not.
+              type: boolean
+            is_staff:
+              description: A flag that indicates whether a user is member of the staff at the service or not.
+              type: boolean
+            num_collection:
+              description: A number of items a user have in its collection.
+              type: integer
+            num_lists:
+              description: A number of list a user created.
+              type: integer
+            num_pending:
+              description: A number of items a user have in its pending list.
+              type: integer
+            num_for_sale:
+              description: A number of item a user have for sale in the marketplace.
+              type: integer
+            num_wantlist:
+              description: A number of items a user have in its want list, if any.
+              type: integer
+            rating_avg:
+              description: An average rating to the total of releases a user rated.
+              type: number
+              format: float
+              minimum: 0
+              maximum: 5
+            releases_contributed:
+              description: A number of releases that a user contributed information.
+              type: integer
+            releases_rated:
+              description: A number of release that a user rated.
+              type: integer
+            buyer_rating:
+              description: An average rating a user have in the marketplace as a buyer.
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            buyer_rating_stars:
+              description: A number of star rating a user have in the marketplace as a buyer.
+              type: integer
+              minimum: 0
+              maximum: 5
+            buyer_num_ratings:
+              description: A total number of ratings a user have in the marketplace as a buyer.
+              type: integer
+            seller_rating:
+              description: An average rating a user have in the marketplace as a seller.
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+            seller_rating_stars:
+              description: A number of star rating a user have in the marketplace as a seller.
+              type: integer
+              minimum: 0
+              maximum: 5
+            seller_num_ratings:
+              description: A total number of ratings a user have in the marketplace as a seller.
+              type: integer
+            avatar_url:
+              description: A URL to the avatar of a user.
+              type: string
+              format: uri
+            banner_url:
+              description: A URL to th banner of a user.
+              type: string
+              format: uri
+            collection_fields_url:
+              description: A URL to the collection fields of a user.
+              type: string
+              format: uri
+            collection_folders_url:
+              description: A URL to the collection forlder of a user.
+              type: string
+              format: uri
+            inventory_url:
+              description: A URL to the inventory of a user.
+              type: string
+              format: uri
+            wantlist_url:
+              description: A URI to the want list of a user.
+              type: string
+              format: uri
+          required:
+            - activated
+            - avatar_url
+            - banner_url
+            - buyer_num_ratings
+            - buyer_rating
+            - buyer_rating_stars
+            - collection_fields_url
+            - collection_folders_url
+            - curr_abbr
+            - home_page
+            - inventory_url
+            - is_staff
+            - location
+            - marketplace_suspended
+            - name
+            - num_collection
+            - num_lists
+            - num_for_sale
+            - num_pending
+            - profile
+            - rating_avg
+            - rank
+            - registered
+            - releases_contributed
+            - releases_rated
+            - seller_num_ratings
+            - seller_rating
+            - seller_rating_stars
+            - uri
+            - wantlist_url
     Video:
       description: A type that represents a video.
       type: object
@@ -2113,7 +2502,7 @@ components:
         - title
         - uri
   securitySchemes:
-    KeySecret:
+    ConsumerKeySecret:
       description: |
         Discogs authentication using a key/secret pair. 
         
@@ -2133,7 +2522,7 @@ components:
         The `Authorization` header should be constructed according to OAuth 1.0a specs, for example: `OAuth oauth_consumer_key="...", oauth_nonce="...", ...`
       type: http
       scheme: oauth
-    Token:
+    UserToken:
       description: |
         Discogs authentication using a personal access token. 
         
