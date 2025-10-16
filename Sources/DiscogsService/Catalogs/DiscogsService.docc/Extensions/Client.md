@@ -61,3 +61,8 @@
 - ``Client/addToWantlist(_:)``
 - ``Client/updateInWantlist(_:)``
 - ``Client/deleteFromWantlist(_:)``
+
+### User Lists
+
+- ``Client/getLists(_:)``
+- ``Client/getList(_:)``

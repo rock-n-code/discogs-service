@@ -1601,13 +1601,13 @@ paths:
           content:
             application/json:
               schema: 
-                description: A type that contains a list of releases in a wantlist.
+                description: A type that contains a list of lists of a user.
                 type: object
                 properties:
                   pagination:
                     $ref: '#/components/schemas/Pagination'
                   wants:
-                    description: A list of releases in a wantlist.
+                    description: A list of lists of a user.
                     type: array
                     items:
                       $ref: '#/components/schemas/ReleaseInFolder'
@@ -1735,6 +1735,82 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/lists:
+    get:
+      tags:
+        - User Lists
+      summary: Get a list of lists of a user.
+      description: |
+        Returns a list of lists created by a users.
+        
+        This endpoints accepts pagination and, to show private lists it is required to be authenticated as a owner.
+      operationId: getLists
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Successfully retrieved a list of lists of a user.
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema: 
+                description: A type that contains a list of lists of a user.
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  lists:
+                    description: A list of lists of a user.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ListId'
+                required:
+                  - lists
+                  - pagination
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /lists/{list_id}:
+    get:
+      tags:
+        - User Lists
+      summary: Get items from a specified list.
+      description: |
+        Returns items from a specified list.
+        
+        Private lists are not shown unless a user is authenticated as an owner.
+      operationId: getList
+      parameters:
+        - $ref: '#/components/parameters/ListId'
+      responses:
+        '200':
+          description: Successfully retrieved the items associated with a specified list.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/List'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -1899,6 +1975,15 @@ components:
       schema:
         type: integer
       example: 1
+    ListId:
+      description: An identifier of a list.
+      name: list_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 0
+      example: 123
     Location:
       description: A geographical location of a user.
       name: location
@@ -2555,6 +2640,140 @@ components:
           properties:
             type:
               enum: [label]
+    ListId:
+      description: A type that references a list.
+      type: object
+      properties:
+        id: 
+          description: An identifier of a list.
+          type: integer
+          minimum: 0
+          readOnly: true
+        uri:
+          description:  A URI representation of a list.
+          type: string
+          format: uri
+        resource_url:
+          description: A URI resource of a list.
+          type: string
+          format: uri
+          readOnly: true
+        name:
+          description: A name of a list.
+          type: string
+        description:
+          description: A descriptive explanation of a list.
+          type: string
+        public:
+          description: A flag that indicates whether a list is public or not.
+          type: boolean
+        date_added:
+          description: A date and time in which a list was created.
+          type: string
+          format: date-time
+        date_changed:
+          description: A date and time in which a list was last changed.
+          type: string
+          format: date-time
+      required:
+        - date_added
+        - date_changed
+        - description
+        - id
+        - name
+        - public
+        - resource_url
+        - uri
+    List:
+      description: A type that represents a list.
+      type: object
+      properties:
+        list_id:
+          description: An identifier of a list.
+          type: integer
+          minimum: 0
+          readOnly: true
+        resource_url:
+          description: A URI resource of a list.
+          type: string
+          format: uri
+          readOnly: true
+        url:
+          description: A URL representation of a list.
+          type: string
+          format: uri
+        name: 
+          description: A name of a list.
+          type: string
+        description: 
+          description: A descriptive explanation of a list.
+          type: string
+        public:
+          description: A flag that indicates whether a list is public or not.
+          type: boolean
+        created_ts:
+          description: A date and time in which a list was created.
+          type: string
+          format: date-time
+        modified_ts:
+          description: A date and time in which a list was last modified.
+          type: string
+          format: date-time
+        items:
+          description: A list of items contained by a list
+          type: array
+          items:
+            description: A type that represents a list item.
+            type: object
+            properties:
+              id:
+                description: An identifier of a list item.
+                type: integer
+                minimum: 0
+                readOnly: true
+              uri: 
+                description: A URI representation of a list item.
+                type: string
+                format: uri
+                readOnly: true
+              resource_url: 
+                description: A URI resource of a list item.
+                type: string
+                format: uri
+                readOnly: true
+              type:
+                description: A type of a list item.
+                type: string
+                enum:
+                  - artist
+                  - label
+                  - release
+              display_title:
+                description: A display title of a list item.
+                type: string
+              image_url:
+                description: An image URL associated with a list item.
+                type: string
+                format: uri
+              comment:
+                description: A comment associated with a list item.
+                type: string
+            required:
+              - display_title
+              - id
+              - image_url
+              - resource_url
+              - type
+              - uri
+      required: 
+        - created_ts
+        - description
+        - list_id
+        - modified_ts
+        - name
+        - public
+        - resource_url
+        - url
     Master:
       description: A type that represents a set of similar releases.
       type: object

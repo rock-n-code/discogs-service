@@ -95,3 +95,10 @@
 - ``APIProtocol/updateInWantlist(path:query:headers:)``
 - ``APIProtocol/deleteFromWantlist(_:)``
 - ``APIProtocol/deleteFromWantlist(path:headers:)``
+
+### User Lists
+
+- ``APIProtocol/getLists(_:)``
+- ``APIProtocol/getLists(path:query:headers:)``
+- ``APIProtocol/getList(_:)``
+- ``APIProtocol/getList(path:headers:)``
