@@ -85,7 +85,7 @@ private extension StringFunctionsTests {
 
 private extension Input {
     /// A list of strings to match against a regular expression pattern in test cases.
-    static let stringsToMatch: [String] = ["Some Pattern", "Some", "Some Other Pattern", "Pattern", .empty]
+    static let stringsToMatch: [String] = [.Pattern.sample, "Some", "Some Other Pattern", "Pattern", .empty]
 }
 
 private extension Output {

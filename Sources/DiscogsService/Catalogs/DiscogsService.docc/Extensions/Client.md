@@ -54,3 +54,10 @@
 - ``Client/getCustomFields(_:)``
 - ``Client/editFieldsInstance(_:)``
 - ``Client/getCollectionValue(_:)``
+
+### User Wantlist
+
+- ``Client/getWantlist(_:)``
+- ``Client/addToWantlist(_:)``
+- ``Client/updateInWantlist(_:)``
+- ``Client/deleteFromWantlist(_:)``

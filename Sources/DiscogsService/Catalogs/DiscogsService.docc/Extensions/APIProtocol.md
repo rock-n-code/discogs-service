@@ -84,3 +84,14 @@
 - ``APIProtocol/editFieldsInstance(path:query:headers:)``
 - ``APIProtocol/getCollectionValue(_:)``
 - ``APIProtocol/getCollectionValue(path:headers:)``
+
+### User Wantlist
+
+- ``APIProtocol/getWantlist(_:)``
+- ``APIProtocol/getWantlist(path:query:headers:)``
+- ``APIProtocol/addToWantlist(_:)``
+- ``APIProtocol/addToWantlist(path:query:headers:)``
+- ``APIProtocol/updateInWantlist(_:)``
+- ``APIProtocol/updateInWantlist(path:query:headers:)``
+- ``APIProtocol/deleteFromWantlist(_:)``
+- ``APIProtocol/deleteFromWantlist(path:headers:)``

@@ -1568,6 +1568,177 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+  /users/{username}/wants:
+    get:
+      tags: 
+        - User Wantlist
+      summary: Get a list of releases in a wantlist of a user.
+      description: |
+        Returnss the list of releases in a wantlist of a user. Accepts Pagination parameters.
+
+        Basic information about each release is provided, suitable for display in a list. For detailed information, make another API call to fetch the corresponding release.
+
+        If the wantlist has been made private by its owner, you must be authenticated as the owner to view it.
+
+        The notes field will be visible if you are authenticated as the wantlist owner.
+      operationId: getWantlist
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Successfully retrieved a list of releases in a wantlist of a user.
+          headers:
+            Link:
+              $ref: '#/components/headers/Link'
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema: 
+                description: A type that contains a list of releases in a wantlist.
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  wants:
+                    description: A list of releases in a wantlist.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReleaseInFolder'
+                required:
+                  - pagination
+                  - wants
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/wants/{release_id}:
+    put:
+      tags:
+        - User Wantlist
+      summary: Add a release into a wantlist of a user.
+      description: |
+        Adds a release to a wantlist of a user.
+
+        This endpoint requires authentication as the wantlist owner.
+      operationId: addToWantlist
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/Notes'
+        - $ref: '#/components/parameters/Rating'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '201':
+          description: Successfully added a release into a wantlist of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                description: A type that represents a newly added release in a wantlist of a user.
+                $ref: '#/components/schemas/ReleaseInFolder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - User Wantlist
+      summary: Update a release into a wantlist of a user.
+      description: |
+        Modifies some metadata associated with a release in a wantlist of a user.
+
+        This endpoint requires authentication as the wantlist owner.
+      operationId: updateInWantlist
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/Notes'
+        - $ref: '#/components/parameters/Rating'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully updated a release in a wantlist of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                description: A type that represents an updated release in a wantlist of a user.
+                $ref: '#/components/schemas/ReleaseInFolder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - User Wantlist
+      summary: Delete a release from a wantlist of a user.
+      description: |
+        Deletes a release from a wantlist of a user.
+
+        This endpoint requires authentication as the wantlist owner.
+      operationId: deleteFromWantlist
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/ReleaseId'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '204':
+          description: Successfully deleted a release from a wantlist of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
 components:
   headers:
     Link:
@@ -1578,7 +1749,6 @@ components:
       schema:
         type: string
         example: <https://api.discogs.com/artists/1/releases?page=2&per_page=75>; rel="next", <https://api.discogs.com/artists/1/releases?page=30&per_page=75>; rel="last"
-      required: true
     OAuthCallback:
       description: An OAuth callback confirmed.
       schema:
@@ -1763,6 +1933,12 @@ components:
       in: query
       schema: 
         type: string
+    Notes:
+      description: A custom note about a release.
+      name: notes
+      in: query
+      schema:
+        type: string
     Page:
       description: A number of page of results to return.
       name: page
@@ -1788,12 +1964,12 @@ components:
         type: string
       example: Some biographical information about a user goes here...
     Rating:
-      description: A number (between 1 and 5) for a rating of a release.
+      description: A number for a rating of a release.
       name: rating
       in: query
       schema:
         type: integer
-        minimum: 1
+        minimum: 0
         maximum: 5
     ReleaseId:
       description: An identifier of a release.
@@ -2610,12 +2786,17 @@ components:
           type: integer
           readOnly: true
         folder_id:
-          description: An identifier of a collection folder that contains a specified release.
+          description: An identifier of a collection folder that contains a specified release, if any.
           type: integer
           readOnly: true
         instance_id: 
-          description: An identifier of a release instance.
+          description: An identifier of a release instance, if any.
           type: integer
+          readOnly: true
+        resource_url:
+          description: A URI resource to a release, if any.
+          type: string
+          format: uri
           readOnly: true
         date_added:
           description: A date and time in which a release was added into the collection folder of a user.
@@ -2649,9 +2830,7 @@ components:
       required:
         - basic_information
         - id
-        - instance_id
         - date_added
-        - rating
     ReleaseInstance:
       description: A type that represents an instace of a release.
       type: object
