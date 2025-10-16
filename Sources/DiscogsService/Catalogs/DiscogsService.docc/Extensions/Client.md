@@ -31,3 +31,26 @@
 - ``Client/putReleaseRatingByUser(_:)``
 - ``Client/deleteReleaseRatingByUser(_:)``
 - ``Client/getReleaseStats(_:)``
+
+### User Identity
+
+- ``Client/getUserProfile(_:)``
+- ``Client/postUserProfile(_:)``
+- ``Client/getUserContributions(_:)``
+- ``Client/getUserSubmissions(_:)``
+
+### User Collection
+
+- ``Client/getCollectionFolders(_:)``
+- ``Client/postCollectionFolders(_:)``
+- ``Client/getCollectionFolder(_:)``
+- ``Client/postCollectionFolder(_:)``
+- ``Client/deleteCollectionFolder(_:)``
+- ``Client/getCollectionItemsByRelease(_:)``
+- ``Client/getCollectionItemsByFolder(_:)``
+- ``Client/postReleaseToCollectionFolder(_:)``
+- ``Client/postChangeRatingOfRelease(_:)``
+- ``Client/deleteInstanceFromCollectionFolder(_:)``
+- ``Client/getCustomFields(_:)``
+- ``Client/editFieldsInstance(_:)``
+- ``Client/getCollectionValue(_:)``

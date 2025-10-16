@@ -44,3 +44,43 @@
 - ``APIProtocol/deleteReleaseRatingByUser(path:headers:)``
 - ``APIProtocol/getReleaseStats(_:)``
 - ``APIProtocol/getReleaseStats(path:headers:)``
+
+### User Identity
+
+- ``APIProtocol/getUserProfile(_:)``
+- ``APIProtocol/getUserProfile(path:headers:)``
+- ``APIProtocol/postUserProfile(_:)``
+- ``APIProtocol/postUserProfile(path:query:headers:)``
+- ``APIProtocol/getUserContributions(_:)``
+- ``APIProtocol/getUserContributions(path:query:headers:)``
+- ``APIProtocol/getUserSubmissions(_:)``
+- ``APIProtocol/getUserSubmissions(path:headers:)``
+
+### User Collection
+
+- ``APIProtocol/getCollectionFolders(_:)``
+- ``APIProtocol/getCollectionFolders(path:headers:)``
+- ``APIProtocol/postCollectionFolders(_:)``
+- ``APIProtocol/postCollectionFolders(path:query:headers:)``
+- ``APIProtocol/getCollectionFolder(_:)``
+- ``APIProtocol/getCollectionFolder(path:headers:)``
+- ``APIProtocol/postCollectionFolder(_:)``
+- ``APIProtocol/postCollectionFolder(path:query:headers:)``
+- ``APIProtocol/deleteCollectionFolder(_:)``
+- ``APIProtocol/deleteCollectionFolder(path:headers:)``
+- ``APIProtocol/getCollectionItemsByRelease(_:)``
+- ``APIProtocol/getCollectionItemsByRelease(path:headers:)``
+- ``APIProtocol/getCollectionItemsByFolder(_:)``
+- ``APIProtocol/getCollectionItemsByFolder(path:query:headers:)``
+- ``APIProtocol/postReleaseToCollectionFolder(_:)``
+- ``APIProtocol/postReleaseToCollectionFolder(path:headers:)``
+- ``APIProtocol/postChangeRatingOfRelease(_:)``
+- ``APIProtocol/postChangeRatingOfRelease(path:query:headers:body:)``
+- ``APIProtocol/deleteInstanceFromCollectionFolder(_:)``
+- ``APIProtocol/deleteInstanceFromCollectionFolder(path:headers:)``
+- ``APIProtocol/getCustomFields(_:)``
+- ``APIProtocol/getCustomFields(path:headers:)``
+- ``APIProtocol/editFieldsInstance(_:)``
+- ``APIProtocol/editFieldsInstance(path:query:headers:)``
+- ``APIProtocol/getCollectionValue(_:)``
+- ``APIProtocol/getCollectionValue(path:headers:)``

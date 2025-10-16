@@ -1060,6 +1060,514 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/folders:
+    get:
+      tags:
+        - User Collection
+      summary: Get all the collection folders of a user.
+      description: |
+        Retrieves a list of folders in a collection of a user. 
+        
+        In case the collection has been made private by its owner, authentication as the collection owner is required. Otherwise, only folder `ID 0`` (the “All” folder) will be visible only if the requested collection of a user is public.
+      operationId: getCollectionFolders
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      responses:
+        '200':
+          description: Successfully retrieved all the collection folders by a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  folders:
+                    description: A list of collection folders of a user.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Folder'
+                required:
+                  - pagination
+                  - folders
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - User Collection
+      summary: Create a new collection folder for a user.
+      description: |
+        Creates a new folder in the collection of a user.
+
+        This endpoint requires authentication for the owner.
+      operationId: postCollectionFolders
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/Name'
+          description: A name for a new folder.
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '201':
+          description: Successfully create a new collection folder for a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/folders/{folder_id}:
+    get:
+      tags:
+        - User Collection
+      summary: Get information about a collection folder of a user.
+      description: |
+        Retrieves metadata about a collection folder of a user.
+
+        In case the `folder_id` is not 0, then the endpoint requires authentication as the collection owner.
+      operationId: getCollectionFolder
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+      responses:
+        '200':
+          description: Successfully retrieved a specific collection folder of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '403':
+          $ref: '#/components/responses/NotAccessable'          
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - User Collection
+      summary: Update information about a collection folder of a user.
+      description: |
+        Edits the metadata for a collection folder of a user. Please bear in mind that the folders with identifier `0` and `1` cannot be renamed.
+
+        Authentication as the collection owner is required.
+      operationId: postCollectionFolder
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+        - $ref: '#/components/parameters/Name'
+          description: A new name for a collection folder of a user.
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved an updated collection folder of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - User Collection
+      summary: Delete a collection folder from a collection of a user.
+      description: |
+        Deletes a collection folder from a collection of a user. 
+        
+        > important: A folder must be empty before it can be deleted.
+
+        This endpoints requires authentication as the collection owner.
+      operationId: deleteCollectionFolder
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '204':
+          description: Successfully delete a specific collection folder of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/releases/{release_id}:
+    get:
+      tags:
+        - User Collection
+      summary: Get collection items of a user that contains a given release.
+      description: |
+        Views those collection folder of a user which contain a specified release. This will also show information about each release instance.
+
+        > important: A given `release_id` must not be `0`.
+
+        This endpoint requires authentication as the collection owner only in case the collection is private.
+      operationId: getCollectionItemsByRelease
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/ReleaseId'
+      responses:
+        '200':
+          description: Successfully retrieved a list of collection items that contains a specified release. 
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  releases:
+                    description: A list of collection folders of a user that contains a specified release.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReleaseInFolder'
+                required:
+                  - pagination
+                  - releases
+        '403':
+          $ref: '#/components/responses/NotAccessable'          
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/folders/{folder_id}/releases:
+    get:
+      tags:
+        - User Collection
+      summary: Get collection items of a user inside a specified folder.
+      description: |
+        Returns the list of item in a specified collection folder of a user.
+        
+        Basic information about each release is provided, suitable for display in a list. For detailed information, make another API call to fetch the corresponding release.
+        
+        This endpoint provides pagination parameters and also, requires authentication as an owner of a collection only in case the `folder_id` is not `0`, or the collection has been made private by its owner. Otherwise, only public notes fields will be visible.
+      operationId: getCollectionItemsByFolder
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+        - $ref: '#/components/parameters/SortField'
+        - $ref: '#/components/parameters/SortOrder'
+      responses:
+        '200':
+          description: Successfully retrieved a specific collection folder of a 
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  releases:
+                    description: A list of collection folders of a user that contains a 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReleaseInFolder'
+                required:
+                  - pagination
+                  - releases
+        '403':
+          $ref: '#/components/responses/NotAccessable'          
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/folders/{folder_id}/releases/{release_id}:
+    post:
+      tags:
+        - User Collection
+      summary: Add a release to a collection folder of a user.
+      description: |
+        Adds a release to a collection folder of a user.
+
+        > important: A `folder_id` must not be `0`, so it is possible to use the identifier `1` for the *Uncategorized* folder.
+
+        This endpoint requires authentication as the collection owner.
+      operationId: postReleaseToCollectionFolder
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+        - $ref: '#/components/parameters/ReleaseId'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '201':
+          description: Successfully added a specific release into a collection folder of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReleaseInstance'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/folders/{folder_id}/releases/{release_id}/instances/{instance_id}:
+    post:
+      tags:
+        - User Collection
+      summary: Update a rating for a specified release instance in a specified collection folder of a user.
+      description: |
+        Changes the rating on a release and/or move the instance to another folder.
+
+        This endpoint potentially takes 2 `folder_id` parameters: 1) in the URL (which is the folder you are requesting, and is required), and 2) in the request body (representing the folder you want to move the instance to, which is optional)
+
+        This endpoints requires authentication as the collection owner.
+      operationId: postChangeRatingOfRelease
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/InstanceId'
+        - $ref: '#/components/parameters/Rating'
+      requestBody:
+        $ref: '#/components/requestBodies/MoveInstance'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '204':
+          description: Successfully updated a rating for a specific release instance inside a collection folder of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - User Collection
+      summary: Delete a specified release instance in a specified collection folder of a user.
+      description: |
+        Removes an instance of a release from a collection folder of a user.
+        
+        > important: To move the release to the *Uncategorized* folder instead, use the `POST` method.
+        
+        This endpoint requires authentication as the collection owner.
+      operationId: deleteInstanceFromCollectionFolder
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/InstanceId'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '204':
+          description: Successfully deleted a specific release instance inside a collection folder of a user. 
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/folders/{folder_id}/releases/{release_id}/instances/{instance_id}/fields/{field_id}:
+    post:
+      tags: 
+        - User Collection
+      summary: Update a value of a custom field assigned to a release instance.
+      description: Changes the value of a notes field on a particular instance.
+      operationId: editFieldsInstance
+      parameters:
+        - $ref: '#/components/parameters/Username'
+        - $ref: '#/components/parameters/FolderId'
+        - $ref: '#/components/parameters/ReleaseId'
+        - $ref: '#/components/parameters/InstanceId'
+        - $ref: '#/components/parameters/FieldId'
+        - $ref: '#/components/parameters/FieldValue'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '204':
+          description: Successfully updated a value of a custom notes field for a release instance in a collection folder.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/fields:
+    get:
+      tags:
+        - User Collection
+      summary: Get a list of custom fields defined by a user.
+      description: |
+        Retrieves a list of collection notes fields defined by a user. 
+        
+        These fields are available on every release in a collection. In case a collection has been made private by its owner, then the endpoints requires authentication as the collection owner. Otherwise only public custom fields will be visible.
+      operationId: getCustomFields
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved a list of custom fields defined by a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                description: A type that contains a list of retrieved custom fields of a user.
+                type: object
+                properties:
+                  fields:
+                    description: A list of custom fields.
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomField'
+                required:
+                  - fields
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /users/{username}/collection/value:
+    get:
+      tags:
+        - User Collection
+      summary: Get the estimated monetary value for a collection of a user.
+      description: |
+        Returns the estimated minimum, median, and maximum values for a collection of a user.
+
+        This endpoint requires authentication as the collection owner.
+      operationId: getCollectionValue
+      parameters:
+        - $ref: '#/components/parameters/Username'
+      security:
+        - ConsumerKeySecret: []
+        - UserToken: []
+        - OAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved the estimated monetary value for a collection of a user.
+          headers:
+            X-Discogs-RateLimit:
+              $ref: '#/components/headers/RateLimit'
+            X-Discogs-RateLimit-Used:
+              $ref: '#/components/headers/RateLimitUsed'
+            X-Discogs-RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionValue'
+        '403':
+          $ref: '#/components/responses/NotAccessable'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
 components:
   headers:
     Link:
@@ -1110,8 +1618,8 @@ components:
       required: true
   parameters:
     ArtistId:
-      name: artist_id
       description: An identifier of an artist.
+      name: artist_id
       in: path
       required: true
       schema:
@@ -1129,15 +1637,15 @@ components:
           - title
           - format
     Authorization:
-      name: Authorization
       description: A string to authenticate a user with a service by carrying credentials.
+      name: Authorization
       in: header
       required: true
       schema:
         type: string
     ContentType:
-      name: Content-Type
       description: A content type for a response.
+      name: Content-Type
       in: header
       required: true
       schema:
@@ -1160,6 +1668,30 @@ components:
       in: query
       schema:
         $ref: '#/components/schemas/Currency'
+    FieldId:
+      description: An identifier of a custom field.
+      name: field_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      example: 8
+    FieldValue:
+      description: A value of a custom field.
+      name: value
+      in: query
+      required: true
+      schema:
+        type: string
+    FolderId:
+      description: An identifier of a collection folder.
+      name: folder_id
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 0
     Format:
       description: A filter by format.
       name: format
@@ -1174,6 +1706,15 @@ components:
         type: string
         format: uri
       example: https://www.some-home.page
+    InstanceId:
+      description: An identifier of a release instance.
+      name: instance_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 0
+      example: 3
     Label:
       description: A filter by label.
       name: label
@@ -1222,7 +1763,6 @@ components:
       in: query
       schema: 
         type: string
-      example: Some real name
     Page:
       description: A number of page of results to return.
       name: page
@@ -1251,7 +1791,6 @@ components:
       description: A number (between 1 and 5) for a rating of a release.
       name: rating
       in: query
-      required: true
       schema:
         type: integer
         minimum: 1
@@ -1309,6 +1848,18 @@ components:
       schema:
         type: string
       example: memory
+  requestBodies:
+    MoveInstance:
+      description: A container to use in case of moving a release instance from a collection folder into another.
+      required: false
+      content:
+        application/json:
+          schema:
+            properties:
+              folder_id:
+                description: An identifier of a collection folder to move a release instance.
+                type: integer
+                minimum: 0
   responses:
     InternalError:
       description: An Internal Server error was encountered.
@@ -1513,6 +2064,23 @@ components:
           properties:
             type:
               enum: [artist]
+    CollectionValue:
+      description: A type that represents the monetary value of a collection.
+      type: object
+      properties:
+        maximum:
+          description: An estimated maximum monetary value of a collection.
+          type: string
+        median:
+          description: An estimated median monetary value of a collection.
+          type: string
+        minimum:
+          description: An estimated minimumn monetary value of a collection.
+          type: string
+      required:
+        - maximum
+        - median
+        - minimum
     Community:
       description: A type that represents a community of users, in relationship to a release.
       type: object
@@ -1558,6 +2126,69 @@ components:
         - NZD
         - SEK
         - ZAR
+    CustomField:
+      description: A type that represents a custom field.
+      type: object
+      properties:
+        id:
+          description: An identifier of a custom field.
+          type: integer
+          readOnly: true
+        name:
+          description: A name of a custom field.
+          type: string
+        position:
+          description: A position of a custom field.
+          type: integer
+          minimum: 1
+        public:
+          description: A flag that indicates whether a custom field is public or not.
+          type: boolean
+        type:
+          description: A type of a custom field.
+          type: string
+          enum:
+            - dropdown
+            - textarea
+        lines:
+          description: A number of lines of content to allow for a custom field of a textarea type.
+          type: integer
+          minimum: 1
+        options:
+          description: A list of options to display, in case the field is of dropdown type.
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - position
+        - public
+        - type
+    Folder:
+      description: A type that represents a collection folder of a user.
+      type: object
+      properties:
+        id:
+          description: An identifier of a collection folder.
+          type: integer
+          readOnly: true
+        name:
+          description: A name of a collection folder.
+          type: string
+        count:
+          description: A number of items a collection folder contains.
+          type: integer
+        resource_url:
+          description: A URI resource of a collection folder.
+          type: string
+          format: uri
+          readOnly: true
+      required:
+        - count
+        - id
+        - name
+        - resource_url
     Identifier:
       description: A type that represents an identifier.
       type: object
@@ -1970,6 +2601,72 @@ components:
         - styles
         - title
         - uri
+    ReleaseInFolder:
+      description: A type that represents an appearance of a release in a collection folder of a user.
+      type: object
+      properties:
+        id:
+          description: An identifier of an appearance of a release in a collection folder.
+          type: integer
+          readOnly: true
+        folder_id:
+          description: An identifier of a collection folder that contains a specified release.
+          type: integer
+          readOnly: true
+        instance_id: 
+          description: An identifier of a release instance.
+          type: integer
+          readOnly: true
+        date_added:
+          description: A date and time in which a release was added into the collection folder of a user.
+          type: string
+          format: date-time
+        rating:
+          description: A rating given to a release by a user that added it into a collection folder.
+          type: integer
+          minimum: 0
+          maximum: 5
+        basic_information:
+          description: The available information about a release that was added into a collection folder of a user.
+          $ref: '#/components/schemas/Release'
+        notes: 
+          description: A list of additional notes related to a release in a collection folder of a user.
+          type: array
+          items:
+            description: A type that represents a note about a release in a collection folder of a user.
+            type: object
+            properties:
+              field_id:
+                description: An identifier of a custom field.
+                type: integer
+                readOnly: true
+              value:
+                description: A value assigned to a custom field.
+                type: string
+            required:
+              - field_id
+              - value
+      required:
+        - basic_information
+        - id
+        - instance_id
+        - date_added
+        - rating
+    ReleaseInstance:
+      description: A type that represents an instace of a release.
+      type: object
+      properties:
+        instance_id:
+          description: An identifier of a release instance.
+          type: integer
+          readOnly: true
+        resource_url:
+          description: A URI resource of a release instance.
+          type: string
+          format: uri
+      required:
+        - instance_id
+        - resource_url
     ReleaseFormat:
       description: A type that represents a format of a release.
       type: object
